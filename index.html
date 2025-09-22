@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>h2Oclear-x | Revolutionizing Microplastic Detection</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="nav-brand">
+                <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#dashboard" class="nav-link" onclick="navigateTo('dashboard')">Dashboard</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <button class="btn btn--primary" onclick="navigateTo('login')">Login</button>
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Revolutionizing Microplastic Detection</h1>
+                    <p class="hero-subtitle">
+                        Experience unprecedented accuracy with our cutting-edge technology. Detect microplastics down to 10-100 μm 
+                        with minimal sample preparation, powered by battery or solar operation for ultimate portability.
+                    </p>
+                    <button class="btn btn--hero" onclick="scrollToSection('technology')">Learn More</button>
+                </div>
+                <div class="hero-visual">
+                    <div class="device-mockup">
+                        <div class="device-screen">
+                            <div class="bluetooth-indicator active" id="bluetoothStatus">
+                                <span class="bluetooth-icon">📶</span>
+                                <span>Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Revolutionary Technology Section -->
+        <section class="technology" id="technology">
+            <div class="container">
+                <h2 class="section-title">Revolutionary Technology</h2>
+                <div class="technology-grid">
+                    <div class="tech-specs">
+                        <h3>Technical Specifications</h3>
+                        <ul class="specs-list">
+                            <li><strong>Detection Range:</strong> 10-100 μm microplastics</li>
+                            <li><strong>Accuracy:</strong> 99.8% precision rate</li>
+                            <li><strong>Power:</strong> Battery/Solar powered operation</li>
+                            <li><strong>Connectivity:</strong> Bluetooth 5.0 wireless</li>
+                            <li><strong>Sample Time:</strong> Real-time analysis (&lt;30 seconds)</li>
+                        </ul>
+                    </div>
+                    <div class="tech-visual">
+                        <div class="scanning-animation">
+                            <div class="scan-line"></div>
+                            <p>Real-time Scanning Active</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Features Section -->
+        <section class="features" id="features">
+            <div class="container">
+                <h2 class="section-title">Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔬</div>
+                        <h3>High Precision Detection</h3>
+                        <p>Accurate detection of microplastics in the 10-100 μm range with minimal sample preparation</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Real-Time Data Analysis</h3>
+                        <p>Visualize and analyze microplastic data instantly with comprehensive reporting</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Portable & User-Friendly</h3>
+                        <p>Compact design optimized for field use with battery or solar power operation</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>Bluetooth Connectivity</h3>
+                        <p>Seamless wireless data transfer to companion software and mobile devices</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bluetooth Connectivity Section -->
+        <section class="bluetooth-section">
+            <div class="container">
+                <h2 class="section-title">Effortless Wireless Connectivity</h2>
+                <p class="section-subtitle">No cables. No hassle. Just real-time data at your fingertips.</p>
+                
+                <div class="bluetooth-demo">
+                    <div class="device-connection">
+                        <div class="bluetooth-device">
+                            <div class="device-status" id="deviceStatus">
+                                <span class="status-indicator"></span>
+                                <span>h2Oclear-x Device</span>
+                            </div>
+                        </div>
+                        <div class="connection-animation">
+                            <div class="connection-line" id="connectionLine"></div>
+                            <div class="signal-waves">
+                                <div class="wave wave-1"></div>
+                                <div class="wave wave-2"></div>
+                                <div class="wave wave-3"></div>
+                            </div>
+                        </div>
+                        <div class="mobile-device">
+                            <div class="phone-screen">
+                                <div class="app-interface">
+                                    <div class="data-stream">
+                                        <div class="data-point"></div>
+                                        <div class="data-point"></div>
+                                        <div class="data-point"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn--secondary" id="connectBtn" onclick="simulateConnection()">
+                        Connect Device
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Target Audience Section -->
+        <section class="audience">
+            <div class="container">
+                <h2 class="section-title">Empowering Key Sectors</h2>
+                <div class="audience-grid">
+                    <div class="audience-card">
+                        <div class="audience-icon">🌊</div>
+                        <h3>Environmental Researchers</h3>
+                        <p>Conduct comprehensive studies on water pollution and microplastic distribution</p>
+                    </div>
+                    <div class="audience-card">
+                        <div class="audience-icon">⚗️</div>
+                        <h3>Water Quality Managers</h3>
+                        <p>Ensure water safety compliance and monitor contamination levels</p>
+                    </div>
+                    <div class="audience-card">
+                        <div class="audience-icon">🎓</div>
+                        <h3>Educational Institutions</h3>
+                        <p>Enable hands-on environmental science learning and research projects</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Software Suite Section -->
+        <section class="software">
+            <div class="container">
+                <h2 class="section-title">Comprehensive Software Suite</h2>
+                <div class="software-grid">
+                    <div class="software-feature">
+                        <div class="software-icon">💾</div>
+                        <h3>Data Logging</h3>
+                        <p>Automatic storage and organization of all detection data with timestamps</p>
+                    </div>
+                    <div class="software-feature">
+                        <div class="software-icon">📈</div>
+                        <h3>Visualization</h3>
+                        <p>Interactive charts, graphs, and dashboards for data analysis</p>
+                    </div>
+                    <div class="software-feature">
+                        <div class="software-icon">🔍</div>
+                        <h3>Analysis Tools</h3>
+                        <p>Assess concentration, size distribution, and material identification</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+                    <p>Revolutionizing water quality analysis through innovative microplastic detection technology.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <ul>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#technology">Technology</a></li>
+                            <li><a href="#software">Software</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#support">Support</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 h2Oclear-x. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dashboard Page (Hidden by default) -->
+    <div id="dashboardPage" class="page-content hidden">
+        <div class="dashboard-header">
+            <div class="container">
+                <div class="dashboard-nav">
+                    <button class="btn btn--outline" onclick="navigateTo('home')">← Back to Home</button>
+                    <h1>Data Dashboard</h1>
+                    <div class="bluetooth-status">
+                        <div class="status-indicator active"></div>
+                        <span>Device Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="container">
+                <!-- Filters -->
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label>Location:</label>
+                        <select class="form-control" id="locationFilter">
+                            <option>All Locations</option>
+                            <option>Lake Superior</option>
+                            <option>Thames River</option>
+                            <option>Pacific Ocean</option>
+                            <option>Mediterranean</option>
+                            <option>Atlantic Ocean</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Size Range:</label>
+                        <select class="form-control" id="sizeFilter">
+                            <option>All Sizes</option>
+                            <option>10-25 μm</option>
+                            <option>25-50 μm</option>
+                            <option>50-75 μm</option>
+                            <option>75-100 μm</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Date Range:</label>
+                        <input type="date" class="form-control" id="dateFilter" value="2025-09-22">
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Microplastic Count Over Time</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="timeSeriesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Size Distribution</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="sizeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Material Type Breakdown</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="materialChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Detections Table -->
+                <div class="table-section">
+                    <h3>Recent Detections</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Date</th>
+                                    <th>Size (μm)</th>
+                                    <th>Type</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detectionsTable">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page (Hidden by default) -->
+    <div id="loginPage" class="page-content hidden">
+        <div class="login-container">
+            <div class="login-form">
+                <div class="login-header">
+                    <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+                    <h2>Sign In to Dashboard</h2>
+                </div>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email or Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full-width">Sign In</button>
+                </form>
+                <div class="login-footer">
+                    <a href="#" class="forgot-password">Forgot your password?</a>
+                    <button class="btn btn--outline" onclick="navigateTo('home')">Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
