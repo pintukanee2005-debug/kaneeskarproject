@@ -123,7 +123,7 @@
             color: #666;
         }
         
-        .refresh-btn {
+        .refresh-btn, .scan-btn {
             background-color: #4a90e2;
             color: white;
             border: none;
@@ -134,8 +134,36 @@
             margin-top: 10px;
         }
         
-        .refresh-btn:hover {
+        .refresh-btn:hover, .scan-btn:hover {
             background-color: #3a7bc8;
+        }
+        
+        .scan-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .scanning-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #4a90e2;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -492,8 +520,8 @@
         </div>
         <div class="device-list-content" id="deviceListContent">
             <div class="no-devices-message">
-                <p>Scanning for devices...</p>
-                <button class="refresh-btn" onclick="scanForDevices()">Refresh</button>
+                <p>Click "Scan for Devices" to find available Bluetooth devices</p>
+                <button class="scan-btn" onclick="scanForDevices()">Scan for Devices</button>
             </div>
         </div>
     </div>
@@ -521,9 +549,6 @@
             // Show overlay and device list
             document.getElementById('bluetoothOverlay').classList.add('active');
             document.getElementById('bluetoothDeviceList').classList.add('active');
-            
-            // Scan for devices
-            scanForDevices();
         }
 
         // Function to hide Bluetooth device list
@@ -537,29 +562,63 @@
             console.log('Scanning for Bluetooth devices...');
             
             const deviceListContent = document.getElementById('deviceListContent');
-            deviceListContent.innerHTML = '<div class="no-devices-message"><p>Scanning for devices...</p></div>';
+            deviceListContent.innerHTML = `
+                <div class="scanning-indicator">
+                    <div class="spinner"></div>
+                    <span>Scanning for devices...</span>
+                </div>
+            `;
             
             try {
-                // Request device with our custom service UUID
+                // First, try to get previously paired devices
+                if (navigator.bluetooth.getDevices) {
+                    try {
+                        const devices = await navigator.bluetooth.getDevices();
+                        availableDevices = devices;
+                        console.log('Found previously paired devices:', devices);
+                    } catch (error) {
+                        console.error('Error getting previously paired devices:', error);
+                    }
+                }
+                
+                // Now, request a new device to trigger the browser's device selection dialog
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['generic_access', 'device_information', 'battery_service', '00001801-0000-1000-8000-00805f9b34fb']
                 });
                 
-                // Add the selected device to our list
-                availableDevices = [device];
-                displayDeviceList();
+                // Add the selected device to our list if not already there
+                if (!availableDevices.find(d => d.id === device.id)) {
+                    availableDevices.push(device);
+                }
                 
-                // Try to connect to the selected device
-                connectToDevice(device);
+                // Display the list of devices
+                displayDeviceList();
                 
             } catch (error) {
                 console.error('Error scanning for devices:', error);
                 
                 if (error.name === 'NotFoundError') {
-                    deviceListContent.innerHTML = '<div class="no-devices-message"><p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                    deviceListContent.innerHTML = `
+                        <div class="no-devices-message">
+                            <p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p>
+                            <button class="scan-btn" onclick="scanForDevices()">Scan Again</button>
+                        </div>
+                    `;
+                } else if (error.name === 'SecurityError') {
+                    deviceListContent.innerHTML = `
+                        <div class="no-devices-message">
+                            <p>Bluetooth access was denied. Please allow the browser to access Bluetooth devices.</p>
+                            <button class="scan-btn" onclick="scanForDevices()">Try Again</button>
+                        </div>
+                    `;
                 } else {
-                    deviceListContent.innerHTML = '<div class="no-devices-message"><p>Error scanning for devices: ' + error.message + '</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                    deviceListContent.innerHTML = `
+                        <div class="no-devices-message">
+                            <p>Error scanning for devices: ${error.message}</p>
+                            <button class="scan-btn" onclick="scanForDevices()">Try Again</button>
+                        </div>
+                    `;
                 }
             }
         }
@@ -569,7 +628,12 @@
             const deviceListContent = document.getElementById('deviceListContent');
             
             if (availableDevices.length === 0) {
-                deviceListContent.innerHTML = '<div class="no-devices-message"><p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                deviceListContent.innerHTML = `
+                    <div class="no-devices-message">
+                        <p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p>
+                        <button class="scan-btn" onclick="scanForDevices()">Scan Again</button>
+                    </div>
+                `;
                 return;
             }
             
@@ -590,6 +654,10 @@
                     </div>
                 `;
             });
+            
+            devicesHTML += `
+                <button class="scan-btn" onclick="scanForDevices()">Scan for More Devices</button>
+            `;
             
             deviceListContent.innerHTML = devicesHTML;
         }
@@ -621,6 +689,7 @@
 
                 // Update UI
                 isConnected = true;
+                bluetoothDevice = device;
                 updateBluetoothStatus(true);
                 document.getElementById('connectBtn').textContent = 'Disconnect';
                 document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
