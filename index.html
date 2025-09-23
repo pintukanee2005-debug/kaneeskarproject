@@ -6,7 +6,6 @@
     <title>h2Oclear-x | Revolutionizing Microplastic Detection</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -454,6 +453,26 @@
         .data-table tr:last-child td {
             border-bottom: none;
         }
+        
+        .esp32-info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #4a90e2;
+            padding: 12px 16px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        
+        .esp32-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #4a90e2;
+        }
+        
+        .esp32-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -592,9 +611,15 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn--secondary" id="connectBtn" onclick="showBluetoothDeviceList()">
-                        Connect Device
+                    <button class="btn btn--secondary" id="connectBtn" onclick="connectToESP32()">
+                        Connect to ESP32 Detector
                     </button>
+                    
+                    <div class="esp32-info">
+                        <h4>ESP32 Microplastic Detector</h4>
+                        <p><strong>Device ID:</strong> F0:24:F9:58:38:FA</p>
+                        <p><strong>Status:</strong> <span id="esp32Status">Not Connected</span></p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -800,27 +825,6 @@
         </div>
     </div>
 
-    <!-- Bluetooth Device Selection Modal -->
-    <div class="overlay" id="bluetoothOverlay" onclick="hideBluetoothDeviceList()"></div>
-    <div class="bluetooth-device-list" id="bluetoothDeviceList">
-        <div class="device-list-header">
-            <h3 class="device-list-title">Select a Bluetooth Device</h3>
-            <button class="close-list-btn" onclick="hideBluetoothDeviceList()">×</button>
-        </div>
-        <div class="device-list-content" id="deviceListContent">
-            <div class="no-devices-message">
-                <p>Click "Scan for Devices" to find available Bluetooth devices</p>
-                <button class="scan-btn" onclick="startRealTimeScan()">Scan for Devices</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- API Connection Status Indicator -->
-    <div class="connection-status" id="apiStatus">
-        <div class="status-dot disconnected" id="apiStatusDot"></div>
-        <span id="apiStatusText">Disconnected from API</span>
-    </div>
-
     <script>
         // Global variables
         let bluetoothDevice = null;
@@ -828,9 +832,6 @@
         let isConnected = false;
         let dataStream = [];
         let chartsInitialized = false;
-        let availableDevices = [];
-        let isScanning = false;
-        let scanTimeout = null;
         let isLoggedIn = false;
         
         // ESP32 device specific information
@@ -954,9 +955,9 @@
             }
         }
 
-        // Function to show Bluetooth device list
-        function showBluetoothDeviceList() {
-            console.log('Showing Bluetooth device list...');
+        // Function to connect to ESP32 device
+        async function connectToESP32() {
+            console.log('Connecting to ESP32 device...');
             
             // Check if Web Bluetooth is available
             if (!navigator.bluetooth) {
@@ -964,201 +965,25 @@
                 alert('Web Bluetooth is not available in this browser. Please use Chrome, Edge, or Opera.');
                 return;
             }
-
-            // Show overlay and device list
-            document.getElementById('bluetoothOverlay').classList.add('active');
-            document.getElementById('bluetoothDeviceList').classList.add('active');
             
-            // Automatically start scanning for devices
-            startRealTimeScan();
-        }
-
-        // Function to hide Bluetooth device list
-        function hideBluetoothDeviceList() {
-            document.getElementById('bluetoothOverlay').classList.remove('active');
-            document.getElementById('bluetoothDeviceList').classList.remove('active');
-            
-            // Stop scanning if it's active
-            if (isScanning) {
-                stopRealTimeScan();
-            }
-        }
-
-        // Function to start real-time scanning
-        function startRealTimeScan() {
-            console.log('Starting real-time Bluetooth scan...');
-            
-            const deviceListContent = document.getElementById('deviceListContent');
-            
-            // Clear previous devices
-            availableDevices = [];
-            
-            // Show scanning indicator
-            deviceListContent.innerHTML = `
-                <div class="scanning-indicator">
-                    <div class="spinner"></div>
-                    <span>Scanning for devices...</span>
-                </div>
-                <button class="scan-btn" onclick="stopRealTimeScan()">Stop Scanning</button>
-            `;
-            
-            // Set scanning flag
-            isScanning = true;
-            
-            // Try to get previously paired devices first
-            if (navigator.bluetooth.getDevices) {
-                navigator.bluetooth.getDevices()
-                    .then(devices => {
-                        console.log('Found previously paired devices:', devices);
-                        devices.forEach(device => {
-                            if (!availableDevices.find(d => d.id === device.id)) {
-                                availableDevices.push(device);
-                            }
-                        });
-                        updateDeviceList();
-                    })
-                    .catch(error => {
-                        console.error('Error getting previously paired devices:', error);
-                    });
-            }
-            
-            // Start scanning for new devices
-            scanForNewDevices();
-            
-            // Set a timeout to stop scanning after 30 seconds
-            scanTimeout = setTimeout(() => {
-                if (isScanning) {
-                    stopRealTimeScan();
-                }
-            }, 30000);
-        }
-
-        // Function to scan for new devices
-        function scanForNewDevices() {
-            if (!isScanning) return;
-            
-            console.log('Scanning for new devices...');
-            
-            // Use requestDevice to trigger the browser's device selection dialog
-            navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: [ESP32_SERVICE_UUID, 'generic_access', 'device_information', 'battery_service']
-            })
-            .then(device => {
-                console.log('Device found:', device);
-                
-                // Add the device to our list if not already there
-                if (!availableDevices.find(d => d.id === device.id)) {
-                    availableDevices.push(device);
-                    updateDeviceList();
-                }
-                
-                // Continue scanning
-                if (isScanning) {
-                    setTimeout(scanForNewDevices, 1000);
-                }
-            })
-            .catch(error => {
-                console.error('Error scanning for devices:', error);
-                
-                // If the user cancelled the dialog, continue scanning
-                if (error.name === 'NotFoundError' && isScanning) {
-                    setTimeout(scanForNewDevices, 1000);
-                } else {
-                    // Stop scanning on other errors
-                    if (isScanning) {
-                        stopRealTimeScan();
-                    }
-                    
-                    // Update the UI to show the error
-                    const deviceListContent = document.getElementById('deviceListContent');
-                    deviceListContent.innerHTML = `
-                        <div class="no-devices-message">
-                            <p>Error scanning for devices: ${error.message}</p>
-                            <button class="scan-btn" onclick="startRealTimeScan()">Try Again</button>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        // Function to stop real-time scanning
-        function stopRealTimeScan() {
-            console.log('Stopping real-time Bluetooth scan...');
-            
-            // Clear the timeout
-            if (scanTimeout) {
-                clearTimeout(scanTimeout);
-                scanTimeout = null;
-            }
-            
-            // Set scanning flag
-            isScanning = false;
-            
-            // Update the UI
-            updateDeviceList();
-        }
-
-        // Function to update the device list UI
-        function updateDeviceList() {
-            const deviceListContent = document.getElementById('deviceListContent');
-            
-            // Show device count
-            let html = `<div class="device-count">Found ${availableDevices.length} device(s)</div>`;
-            
-            if (availableDevices.length === 0) {
-                html += `
-                    <div class="no-devices-message">
-                        <p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p>
-                    </div>
-                `;
-            } else {
-                // Display each device
-                availableDevices.forEach((device, index) => {
-                    const deviceName = device.name || 'Unknown Device';
-                    const deviceId = device.id || 'Unknown ID';
-                    
-                    // Check if this is our ESP32 device
-                    const isESP32 = deviceId === ESP32_DEVICE_ID;
-                    
-                    html += `
-                        <div class="device-item ${isESP32 ? 'selected' : ''}" onclick="connectToDevice(availableDevices[${index}])">
-                            <div class="device-item-icon">${isESP32 ? '🔬' : '📱'}</div>
-                            <div class="device-item-info">
-                                <div class="device-item-name">${deviceName} ${isESP32 ? '(ESP32)' : ''}</div>
-                                <div class="device-item-id">${deviceId}</div>
-                            </div>
-                            <div class="device-item-signal">📶</div>
-                        </div>
-                    `;
-                });
-            }
-            
-            // Add scan button
-            if (isScanning) {
-                html += `
-                    <div class="scanning-indicator">
-                        <div class="spinner"></div>
-                        <span>Scanning for devices...</span>
-                    </div>
-                    <button class="scan-btn" onclick="stopRealTimeScan()">Stop Scanning</button>
-                `;
-            } else {
-                html += `<button class="scan-btn" onclick="startRealTimeScan()">Scan Again</button>`;
-            }
-            
-            deviceListContent.innerHTML = html;
-        }
-
-        // Function to connect to a specific Bluetooth device
-        async function connectToDevice(device) {
-            console.log('Connecting to device:', device.name);
+            // Update button text to show we're trying to connect
+            document.getElementById('connectBtn').textContent = 'Connecting...';
+            document.getElementById('connectBtn').disabled = true;
             
             try {
-                // Stop scanning if it's active
-                if (isScanning) {
-                    stopRealTimeScan();
+                // Request device with the specific service UUID for ESP32
+                console.log('Requesting Bluetooth device with service UUID:', ESP32_SERVICE_UUID);
+                
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [ESP32_SERVICE_UUID] }]
+                });
+                
+                // Verify this is our ESP32 device
+                if (device.id !== ESP32_DEVICE_ID) {
+                    throw new Error(`Connected to wrong device. Expected ${ESP32_DEVICE_ID} but got ${device.id}`);
                 }
+                
+                console.log('ESP32 device selected:', device.name);
                 
                 // Connect to device
                 console.log('Connecting to GATT server...');
@@ -1185,7 +1010,9 @@
                 bluetoothDevice = device;
                 updateBluetoothStatus(true);
                 document.getElementById('connectBtn').textContent = 'Disconnect';
+                document.getElementById('connectBtn').disabled = false;
                 document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
+                document.getElementById('esp32Status').textContent = 'Connected';
 
                 // Show connection animation
                 document.getElementById('connectionLine').classList.add('active');
@@ -1193,21 +1020,23 @@
                     wave.classList.add('active');
                 });
                 
-                // Hide device list
-                hideBluetoothDeviceList();
-                
                 // Show success message
-                alert('Successfully connected to ' + (device.name || 'Unknown Device'));
+                alert('Successfully connected to ESP32 Microplastic Detector!');
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
                 
+                // Reset button
+                document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('esp32Status').textContent = 'Connection Failed';
+                
                 if (error.name === 'NetworkError') {
-                    alert('Bluetooth connection failed. Please try again.');
+                    alert('Bluetooth connection failed. Please make sure your ESP32 device is powered on and in range.');
                 } else if (error.name === 'SecurityError') {
                     alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
                 } else {
-                    alert('Failed to connect to device: ' + error.message);
+                    alert('Failed to connect to ESP32 device: ' + error.message);
                 }
             }
         }
@@ -1252,8 +1081,10 @@
             
             isConnected = false;
             updateBluetoothStatus(false);
-            document.getElementById('connectBtn').textContent = 'Connect Device';
-            document.getElementById('connectBtn').onclick = showBluetoothDeviceList;
+            document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('connectBtn').onclick = connectToESP32;
+            document.getElementById('esp32Status').textContent = 'Not Connected';
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
