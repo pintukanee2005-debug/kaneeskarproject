@@ -10,6 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Set default text color to black for all elements */
+        * {
+            color: #000000;
+        }
+        
         /* Additional styles for Bluetooth device list */
         .bluetooth-device-list {
             background-color: rgba(255, 255, 255, 0.95);
@@ -457,6 +462,7 @@
         /* Additional styles for device selection */
         .device-selection-container {
             margin-top: 20px;
+            text-align: center;
         }
         
         .device-selection-btn {
@@ -707,9 +713,6 @@
                         <button class="btn btn--secondary" id="scanBtn" onclick="scanForDevices()">
                             Scan for Devices
                         </button>
-                        <button class="btn btn--primary" id="connectBtn" onclick="connectToDevice()" disabled>
-                            Clear X devices
-                        </button>
                     </div>
                     
                     <div class="selected-device" id="selectedDeviceInfo" style="display: none;">
@@ -952,8 +955,8 @@
         let dataCount = 0;
         
         // ESP32 device specific information
-        const ESP32_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
-        const ESP32_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+        const SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+        const CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -1054,7 +1057,7 @@
             }
         }
 
-        // Scan for available Bluetooth devices
+        // Scan for available Bluetooth devices using Web Bluetooth API
         async function scanForDevices() {
             console.log('Scanning for Bluetooth devices...');
             
@@ -1065,9 +1068,9 @@
             }
             
             try {
+                // Use Web Bluetooth API to request device with specific service UUID
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [ESP32_SERVICE_UUID]
+                    filters: [{ services: [SERVICE_UUID] }]
                 });
                 
                 selectedDevice = device;
@@ -1076,9 +1079,12 @@
                 document.getElementById('selectedDeviceName').textContent = device.name || 'Unknown Device';
                 document.getElementById('selectedDeviceId').textContent = device.id;
                 document.getElementById('selectedDeviceInfo').style.display = 'block';
-                document.getElementById('connectBtn').disabled = false;
                 
                 console.log('Device selected:', device.name, device.id);
+                
+                // Automatically connect to the selected device
+                connectToDevice();
+                
             } catch (error) {
                 console.error('Bluetooth scan failed:', error);
                 alert('Failed to scan for devices: ' + error.message);
@@ -1094,23 +1100,19 @@
             
             console.log('Connecting to device:', selectedDevice.name);
             
-            // Update button text to show we're trying to connect
-            document.getElementById('connectBtn').textContent = 'Connecting...';
-            document.getElementById('connectBtn').disabled = true;
-            
             try {
-                // Connect to device
+                // Connect to device using Web Bluetooth API
                 console.log('Connecting to GATT server...');
                 const server = await selectedDevice.gatt.connect();
                 console.log('Connected to GATT server');
 
                 // Get service and characteristic
                 console.log('Getting primary service...');
-                const service = await server.getPrimaryService(ESP32_SERVICE_UUID);
+                const service = await server.getPrimaryService(SERVICE_UUID);
                 console.log('Service found');
                 
                 console.log('Getting characteristic...');
-                bluetoothCharacteristic = await service.getCharacteristic(ESP32_CHARACTERISTIC_UUID);
+                bluetoothCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
                 console.log('Characteristic found');
 
                 // Start notifications
@@ -1123,9 +1125,6 @@
                 isConnected = true;
                 bluetoothDevice = selectedDevice;
                 updateBluetoothStatus(true);
-                document.getElementById('connectBtn').textContent = 'Disconnect';
-                document.getElementById('connectBtn').disabled = false;
-                document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
 
                 // Show connection animation
                 document.getElementById('connectionLine').classList.add('active');
@@ -1138,10 +1137,6 @@
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
-                
-                // Reset button
-                document.getElementById('connectBtn').textContent = 'Clear X devices';
-                document.getElementById('connectBtn').disabled = false;
                 
                 if (error.name === 'NetworkError') {
                     alert('Bluetooth connection failed. Please make sure your device is powered on and in range.');
@@ -1171,9 +1166,6 @@
                 // Add to our data stream
                 dataStream.push(dataWithTimestamp);
                 dataCount++;
-                
-                // Update data count
-                document.getElementById('dataCount').textContent = dataCount;
                 
                 // Keep only last 100 entries
                 if (dataStream.length > 100) {
@@ -1210,9 +1202,6 @@
             
             isConnected = false;
             updateBluetoothStatus(false);
-            document.getElementById('connectBtn').textContent = 'Clear X devices';
-            document.getElementById('connectBtn').disabled = false;
-            document.getElementById('connectBtn').onclick = connectToDevice;
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
