@@ -240,17 +240,19 @@
             margin-bottom: 30px;
         }
         
-        .login-header .logo {
-            font-size: 28px;
+        /* NEW: Add proper styling for login title */
+        .login-title {
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            color: #333;
         }
         
         .login-header h2 {
             font-size: 24px;
             font-weight: 600;
-            margin: 0;
-            color: #333;
+            margin: 0 0 20px 0;
+            color: #555;
         }
         
         .form-group {
@@ -455,26 +457,6 @@
             border-bottom: none;
         }
         
-        .esp32-info {
-            background-color: #f0f7ff;
-            border-left: 4px solid #4a90e2;
-            padding: 12px 16px;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
-        
-        .esp32-info h4 {
-            margin: 0 0 8px 0;
-            font-size: 16px;
-            color: #4a90e2;
-        }
-        
-        .esp32-info p {
-            margin: 0;
-            font-size: 14px;
-            color: #666;
-        }
-        
         /* Logo styling */
         .logo {
             font-weight: 700;
@@ -625,15 +607,12 @@
                             </div>
                         </div>
                     </div>
+                    <!-- UPDATED: Changed button text from "Connect to ESP32 Detector" to "Available Bluetooth Devices" -->
                     <button class="btn btn--secondary" id="connectBtn" onclick="connectToESP32()">
-                        Connect to ESP32 Detector
+                        Available Bluetooth Devices
                     </button>
                     
-                    <div class="esp32-info">
-                        <h4>ESP32 Microplastic Detector</h4>
-                        <p><strong>Device ID:</strong> F0:24:F9:58:38:FA</p>
-                        <p><strong>Status:</strong> <span id="esp32Status">Not Connected</span></p>
-                    </div>
+                    <!-- REMOVED: The entire ESP32 info section with device details -->
                 </div>
             </div>
         </section>
@@ -724,8 +703,9 @@
     <div id="loginPage" class="page-content">
         <div class="login-container">
             <div class="login-form">
+                <!-- FIXED: Changed logo span to h1 with proper class and capitalization -->
                 <div class="login-header">
-                    <span class="logo">H<span class="logo-accent">2O</span> <span class="logo-black">clear-X</span></span>
+                    <h1 class="login-title">H<span class="logo-accent">2O</span> <span class="logo-black">CLEAR-X</span></h1>
                     <h2>Sign In to Dashboard</h2>
                 </div>
                 <form id="loginForm" onsubmit="handleLogin(event)">
@@ -1026,7 +1006,6 @@
                 document.getElementById('connectBtn').textContent = 'Disconnect';
                 document.getElementById('connectBtn').disabled = false;
                 document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
-                document.getElementById('esp32Status').textContent = 'Connected';
 
                 // Show connection animation
                 document.getElementById('connectionLine').classList.add('active');
@@ -1041,9 +1020,8 @@
                 console.error('Bluetooth connection failed:', error);
                 
                 // Reset button
-                document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+                document.getElementById('connectBtn').textContent = 'Available Bluetooth Devices';
                 document.getElementById('connectBtn').disabled = false;
-                document.getElementById('esp32Status').textContent = 'Connection Failed';
                 
                 if (error.name === 'NetworkError') {
                     alert('Bluetooth connection failed. Please make sure your ESP32 device is powered on and in range.');
@@ -1095,10 +1073,9 @@
             
             isConnected = false;
             updateBluetoothStatus(false);
-            document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+            document.getElementById('connectBtn').textContent = 'Available Bluetooth Devices';
             document.getElementById('connectBtn').disabled = false;
             document.getElementById('connectBtn').onclick = connectToESP32;
-            document.getElementById('esp32Status').textContent = 'Not Connected';
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
