@@ -271,6 +271,7 @@
             border-radius: 4px;
             font-size: 16px;
             transition: border-color 0.3s;
+            color: #000000; /* Set input text color to black */
         }
         
         .form-control:focus {
@@ -473,6 +474,19 @@
             font-size: 14px;
             color: #666;
         }
+        
+        /* Logo styling */
+        .logo {
+            font-weight: 700;
+        }
+        
+        .logo-accent {
+            color: #4a90e2;
+        }
+        
+        .logo-black {
+            color: #000000;
+        }
     </style>
 </head>
 <body>
@@ -480,7 +494,7 @@
     <header class="header" id="mainHeader">
         <nav class="nav container">
             <div class="nav-brand">
-                <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+                <span class="logo">H<span class="logo-accent">2O</span> <span class="logo-black">clear-X</span></span>
             </div>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="#home" class="nav-link">Home</a></li>
@@ -678,7 +692,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">
-                    <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+                    <span class="logo">H<span class="logo-accent">2O</span> <span class="logo-black">clear-X</span></span>
                     <p>Revolutionizing water quality analysis through innovative microplastic detection technology.</p>
                 </div>
                 <div class="footer-links">
@@ -701,7 +715,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 h2Oclear-x. All rights reserved.</p>
+                <p>&copy; 2025 H2O clear-X. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -711,7 +725,7 @@
         <div class="login-container">
             <div class="login-form">
                 <div class="login-header">
-                    <span class="logo">h<span class="logo-accent">2O</span>clear-x</span>
+                    <span class="logo">H<span class="logo-accent">2O</span> <span class="logo-black">clear-X</span></span>
                     <h2>Sign In to Dashboard</h2>
                 </div>
                 <form id="loginForm" onsubmit="handleLogin(event)">
@@ -937,7 +951,7 @@
                 }
                 
                 document.getElementById('dashboardPage').classList.add('active');
-                document.getElementById('mainHeader').style.display = 'block';
+                document.getElementById('mainHeader').styleDisplay = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
                 
                 // Initialize dashboard charts if needed
