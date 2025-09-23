@@ -146,7 +146,7 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn--secondary" id="connectBtn" onclick="connectBluetoothDevice()">
+                    <button class="btn btn--secondary" id="connectBtn" onclick="requestBluetoothDevice()">
                         Connect Device
                     </button>
                 </div>
@@ -362,31 +362,47 @@
         let dataStream = [];
         let chartsInitialized = false;
 
-        // Bluetooth connection function
-        async function connectBluetoothDevice() {
-            try {
-                // Check if Web Bluetooth is available
-                if (!navigator.bluetooth) {
-                    throw new Error('Web Bluetooth is not available in this browser!');
-                }
+        // Function to request Bluetooth device - this will show the device selection dialog
+        async function requestBluetoothDevice() {
+            console.log('Requesting Bluetooth device...');
+            
+            // Check if Web Bluetooth is available
+            if (!navigator.bluetooth) {
+                console.error('Web Bluetooth is not available in this browser!');
+                alert('Web Bluetooth is not available in this browser. Please use Chrome, Edge, or Opera.');
+                return;
+            }
 
-                // Request device
+            try {
+                console.log('Calling navigator.bluetooth.requestDevice...');
+                
+                // Request device with our custom service UUID
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'h2Oclear-x' }],
-                    optionalServices: ['generic_access', 'device_information']
+                    acceptAllDevices: true, // This will show all available devices
+                    optionalServices: ['generic_access', 'device_information', '00001801-0000-1000-8000-00805f9b34fb']
                 });
 
+                console.log('Device selected:', bluetoothDevice.name);
+                
                 // Connect to device
+                console.log('Connecting to GATT server...');
                 const server = await bluetoothDevice.gatt.connect();
-                console.log('Connected to device:', bluetoothDevice.name);
+                console.log('Connected to GATT server');
 
                 // Get service and characteristic
+                console.log('Getting primary service...');
                 const service = await server.getPrimaryService('generic_access');
+                console.log('Service found');
+                
+                console.log('Getting characteristic...');
                 bluetoothCharacteristic = await service.getCharacteristic('device_information');
+                console.log('Characteristic found');
 
                 // Start notifications
+                console.log('Starting notifications...');
                 await bluetoothCharacteristic.startNotifications();
                 bluetoothCharacteristic.addEventListener('characteristicvaluechanged', handleBluetoothData);
+                console.log('Notifications started');
 
                 // Update UI
                 isConnected = true;
@@ -402,7 +418,16 @@
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
-                alert('Failed to connect to device. Please make sure it is powered on and in range.');
+                
+                if (error.name === 'NotFoundError') {
+                    alert('No Bluetooth devices found. Please make sure your device is powered on and in range.');
+                } else if (error.name === 'NetworkError') {
+                    alert('Bluetooth connection failed. Please try again.');
+                } else if (error.name === 'SecurityError') {
+                    alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
+                } else {
+                    alert('Failed to connect to device: ' + error.message);
+                }
             }
         }
 
@@ -442,7 +467,7 @@
             isConnected = false;
             updateBluetoothStatus(false);
             document.getElementById('connectBtn').textContent = 'Connect Device';
-            document.getElementById('connectBtn').onclick = connectBluetoothDevice;
+            document.getElementById('connectBtn').onclick = requestBluetoothDevice;
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
