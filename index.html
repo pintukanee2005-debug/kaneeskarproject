@@ -10,11 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Set default text color to black for all elements */
-        * {
-            color: #000000;
-        }
-        
         /* Additional styles for Bluetooth device list */
         .bluetooth-device-list {
             background-color: rgba(255, 255, 255, 0.95);
@@ -459,116 +454,24 @@
             border-bottom: none;
         }
         
-        /* Additional styles for device selection */
-        .device-selection-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .device-selection-btn {
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-        
-        .device-selection-btn:hover {
-            background-color: #3a7bc8;
-        }
-        
-        .device-selection-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        .selected-device {
-            margin-top: 15px;
-            padding: 10px;
+        .esp32-info {
             background-color: #f0f7ff;
-            border-radius: 4px;
             border-left: 4px solid #4a90e2;
+            padding: 12px 16px;
+            margin-top: 10px;
+            border-radius: 4px;
         }
         
-        .selected-device h4 {
-            margin: 0 0 5px 0;
+        .esp32-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
             color: #4a90e2;
         }
         
-        .selected-device p {
+        .esp32-info p {
             margin: 0;
             font-size: 14px;
-        }
-        
-        /* Enhanced chart styles */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        
-        .chart-controls {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 10px;
-        }
-        
-        .chart-control-btn {
-            background: none;
-            border: 1px solid #ddd;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 5px;
-        }
-        
-        .chart-control-btn:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .real-time-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #4CAF50;
-            margin-right: 5px;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .data-received {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background-color: rgba(76, 175, 80, 0.9);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-size: 14px;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .data-received.show {
-            display: block;
-            animation: fadeInOut 2s;
-        }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { opacity: 0; }
+            color: #666;
         }
     </style>
 </head>
@@ -708,17 +611,14 @@
                             </div>
                         </div>
                     </div>
+                    <button class="btn btn--secondary" id="connectBtn" onclick="connectToESP32()">
+                        Connect to ESP32 Detector
+                    </button>
                     
-                    <div class="device-selection-container">
-                        <button class="btn btn--secondary" id="scanBtn" onclick="scanForDevices()">
-                            Scan for Devices
-                        </button>
-                    </div>
-                    
-                    <div class="selected-device" id="selectedDeviceInfo" style="display: none;">
-                        <h4>Selected Device</h4>
-                        <p><strong>Name:</strong> <span id="selectedDeviceName">None</span></p>
-                        <p><strong>ID:</strong> <span id="selectedDeviceId">None</span></p>
+                    <div class="esp32-info">
+                        <h4>ESP32 Microplastic Detector</h4>
+                        <p><strong>Device ID:</strong> F0:24:F9:58:38:FA</p>
+                        <p><strong>Status:</strong> <span id="esp32Status">Not Connected</span></p>
                     </div>
                 </div>
             </div>
@@ -882,32 +782,20 @@
                 <!-- Charts Section -->
                 <div class="charts-grid">
                     <div class="chart-card">
-                        <div class="chart-controls">
-                            <button class="chart-control-btn" onclick="resetChart('timeSeriesChart')">Reset</button>
-                            <button class="chart-control-btn" onclick="exportChart('timeSeriesChart')">Export</button>
-                        </div>
                         <h3>Microplastic Count Over Time</h3>
-                        <div class="chart-container">
+                        <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="timeSeriesChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <div class="chart-controls">
-                            <button class="chart-control-btn" onclick="resetChart('sizeChart')">Reset</button>
-                            <button class="chart-control-btn" onclick="exportChart('sizeChart')">Export</button>
-                        </div>
                         <h3>Size Distribution</h3>
-                        <div class="chart-container">
+                        <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="sizeChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <div class="chart-controls">
-                            <button class="chart-control-btn" onclick="resetChart('materialChart')">Reset</button>
-                            <button class="chart-control-btn" onclick="exportChart('materialChart')">Export</button>
-                        </div>
                         <h3>Material Type Breakdown</h3>
-                        <div class="chart-container">
+                        <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="materialChart"></canvas>
                         </div>
                     </div>
@@ -937,12 +825,6 @@
         </div>
     </div>
 
-    <!-- Data received notification -->
-    <div class="data-received" id="dataNotification">
-        <span class="real-time-indicator"></span>
-        New data received from device
-    </div>
-
     <script>
         // Global variables
         let bluetoothDevice = null;
@@ -951,12 +833,11 @@
         let dataStream = [];
         let chartsInitialized = false;
         let isLoggedIn = false;
-        let selectedDevice = null;
-        let dataCount = 0;
         
         // ESP32 device specific information
-        const SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
-        const CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+        const ESP32_DEVICE_ID = "F0:24:F9:58:38:FA";
+        const ESP32_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+        const ESP32_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -981,15 +862,19 @@
 
         // Check login status
         function checkLoginStatus() {
+            // In a real application, you would check for a valid session token
+            // For this demo, we'll just check localStorage
             const loggedInUser = localStorage.getItem('loggedInUser');
             
             if (loggedInUser) {
                 isLoggedIn = true;
+                // If we're not on the dashboard page, redirect to it
                 if (!document.getElementById('dashboardPage').classList.contains('active')) {
                     navigateTo('dashboard');
                 }
             } else {
                 isLoggedIn = false;
+                // If we're not on the home page, redirect to it
                 if (!document.getElementById('mainContent').style.display || document.getElementById('mainContent').style.display === 'none') {
                     navigateTo('home');
                 }
@@ -1002,9 +887,14 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
+            // Simple authentication (replace with real authentication)
             if (username && password) {
+                // In a real application, you would send these credentials to your server
+                // For this demo, we'll just set a localStorage item
                 localStorage.setItem('loggedInUser', username);
                 isLoggedIn = true;
+                
+                // Navigate to dashboard
                 navigateTo('dashboard');
             } else {
                 alert('Please enter valid credentials');
@@ -1013,28 +903,34 @@
 
         // Logout function
         function logout() {
+            // Clear the login status
             localStorage.removeItem('loggedInUser');
             isLoggedIn = false;
             
+            // Disconnect from Bluetooth device if connected
             if (isConnected) {
                 disconnectBluetoothDevice();
             }
             
+            // Navigate to home page
             navigateTo('home');
         }
 
         // Navigation function
         function navigateTo(page) {
+            // Hide all pages
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('mainHeader').style.display = 'block';
             document.getElementById('mainFooter').style.display = 'block';
             
+            // Show selected page
             if (page === 'home') {
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
             } else if (page === 'dashboard') {
+                // Check if user is logged in
                 if (!isLoggedIn) {
                     navigateTo('login');
                     return;
@@ -1044,11 +940,13 @@
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
                 
+                // Initialize dashboard charts if needed
                 if (!chartsInitialized) {
                     initDashboardCharts();
                     chartsInitialized = true;
                 }
                 
+                // Update dashboard with latest data
                 updateDashboard();
             } else if (page === 'login') {
                 document.getElementById('loginPage').classList.add('active');
@@ -1057,62 +955,48 @@
             }
         }
 
-        // Scan for available Bluetooth devices using Web Bluetooth API
-        async function scanForDevices() {
-            console.log('Scanning for Bluetooth devices...');
+        // Function to connect to ESP32 device
+        async function connectToESP32() {
+            console.log('Connecting to ESP32 device...');
             
+            // Check if Web Bluetooth is available
             if (!navigator.bluetooth) {
                 console.error('Web Bluetooth is not available in this browser!');
                 alert('Web Bluetooth is not available in this browser. Please use Chrome, Edge, or Opera.');
                 return;
             }
             
+            // Update button text to show we're trying to connect
+            document.getElementById('connectBtn').textContent = 'Connecting...';
+            document.getElementById('connectBtn').disabled = true;
+            
             try {
-                // Use Web Bluetooth API to request device with specific service UUID
+                // Request device with the specific service UUID for ESP32
+                console.log('Requesting Bluetooth device with service UUID:', ESP32_SERVICE_UUID);
+                
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }]
+                    filters: [{ services: [ESP32_SERVICE_UUID] }]
                 });
                 
-                selectedDevice = device;
+                // Verify this is our ESP32 device
+                if (device.id !== ESP32_DEVICE_ID) {
+                    throw new Error(`Connected to wrong device. Expected ${ESP32_DEVICE_ID} but got ${device.id}`);
+                }
                 
-                // Update UI with selected device info
-                document.getElementById('selectedDeviceName').textContent = device.name || 'Unknown Device';
-                document.getElementById('selectedDeviceId').textContent = device.id;
-                document.getElementById('selectedDeviceInfo').style.display = 'block';
+                console.log('ESP32 device selected:', device.name);
                 
-                console.log('Device selected:', device.name, device.id);
-                
-                // Automatically connect to the selected device
-                connectToDevice();
-                
-            } catch (error) {
-                console.error('Bluetooth scan failed:', error);
-                alert('Failed to scan for devices: ' + error.message);
-            }
-        }
-
-        // Connect to the selected Bluetooth device
-        async function connectToDevice() {
-            if (!selectedDevice) {
-                alert('Please select a device first');
-                return;
-            }
-            
-            console.log('Connecting to device:', selectedDevice.name);
-            
-            try {
-                // Connect to device using Web Bluetooth API
+                // Connect to device
                 console.log('Connecting to GATT server...');
-                const server = await selectedDevice.gatt.connect();
+                const server = await device.gatt.connect();
                 console.log('Connected to GATT server');
 
                 // Get service and characteristic
                 console.log('Getting primary service...');
-                const service = await server.getPrimaryService(SERVICE_UUID);
+                const service = await server.getPrimaryService(ESP32_SERVICE_UUID);
                 console.log('Service found');
                 
                 console.log('Getting characteristic...');
-                bluetoothCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+                bluetoothCharacteristic = await service.getCharacteristic(ESP32_CHARACTERISTIC_UUID);
                 console.log('Characteristic found');
 
                 // Start notifications
@@ -1123,8 +1007,12 @@
 
                 // Update UI
                 isConnected = true;
-                bluetoothDevice = selectedDevice;
+                bluetoothDevice = device;
                 updateBluetoothStatus(true);
+                document.getElementById('connectBtn').textContent = 'Disconnect';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
+                document.getElementById('esp32Status').textContent = 'Connected';
 
                 // Show connection animation
                 document.getElementById('connectionLine').classList.add('active');
@@ -1133,17 +1021,22 @@
                 });
                 
                 // Show success message
-                alert('Successfully connected to ' + selectedDevice.name + '!');
+                alert('Successfully connected to ESP32 Microplastic Detector!');
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
                 
+                // Reset button
+                document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('esp32Status').textContent = 'Connection Failed';
+                
                 if (error.name === 'NetworkError') {
-                    alert('Bluetooth connection failed. Please make sure your device is powered on and in range.');
+                    alert('Bluetooth connection failed. Please make sure your ESP32 device is powered on and in range.');
                 } else if (error.name === 'SecurityError') {
                     alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
                 } else {
-                    alert('Failed to connect to device: ' + error.message);
+                    alert('Failed to connect to ESP32 device: ' + error.message);
                 }
             }
         }
@@ -1165,15 +1058,11 @@
                 
                 // Add to our data stream
                 dataStream.push(dataWithTimestamp);
-                dataCount++;
                 
                 // Keep only last 100 entries
                 if (dataStream.length > 100) {
                     dataStream.shift();
                 }
-                
-                // Show data received notification
-                showDataNotification();
                 
                 // Update dashboard if visible
                 if (document.getElementById('dashboardPage').classList.contains('active')) {
@@ -1184,16 +1073,6 @@
             }
         }
 
-        // Show data received notification
-        function showDataNotification() {
-            const notification = document.getElementById('dataNotification');
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 2000);
-        }
-
         // Disconnect Bluetooth device
         function disconnectBluetoothDevice() {
             if (bluetoothDevice && bluetoothDevice.gatt.connected) {
@@ -1202,6 +1081,10 @@
             
             isConnected = false;
             updateBluetoothStatus(false);
+            document.getElementById('connectBtn').textContent = 'Connect to ESP32 Detector';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('connectBtn').onclick = connectToESP32;
+            document.getElementById('esp32Status').textContent = 'Not Connected';
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
@@ -1244,29 +1127,10 @@
                         label: 'Microplastic Count',
                         data: Array(10).fill(0),
                         borderColor: '#4a90e2',
-                        tension: 0.3,
-                        fill: false
+                        tension: 0.3
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Particle Count'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Time'
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
             
             // Size distribution chart
@@ -1280,25 +1144,7 @@
                         backgroundColor: '#50c878'
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Particle Count'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Size Range'
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
             
             // Material type chart
@@ -1311,19 +1157,7 @@
                         backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Material Type Distribution'
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
@@ -1333,10 +1167,7 @@
             
             // Update time series chart
             const timeData = dataStream.slice(-10).map(d => d.count);
-            const timeLabels = dataStream.slice(-10).map(d => 
-                d.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            );
-            updateTimeSeriesChart(timeData, timeLabels);
+            updateChart('timeSeriesChart', timeData);
             
             // Update size distribution
             const sizeData = categorizeBySize(dataStream);
@@ -1348,16 +1179,6 @@
             
             // Update recent detections table
             updateTable(dataStream.slice(-5).reverse());
-        }
-
-        // Update time series chart with labels
-        function updateTimeSeriesChart(data, labels) {
-            const chart = Chart.getChart('timeSeriesChart');
-            if (chart) {
-                chart.data.labels = labels;
-                chart.data.datasets[0].data = data;
-                chart.update();
-            }
         }
 
         // Helper function to categorize data by size
@@ -1411,35 +1232,6 @@
                 row.insertCell(3).textContent = d.type;
                 row.insertCell(4).textContent = d.count;
             });
-        }
-
-        // Reset chart data
-        function resetChart(chartId) {
-            const chart = Chart.getChart(chartId);
-            if (chart) {
-                if (chartId === 'timeSeriesChart') {
-                    chart.data.labels = Array(10).fill('');
-                    chart.data.datasets[0].data = Array(10).fill(0);
-                } else if (chartId === 'sizeChart') {
-                    chart.data.datasets[0].data = [0, 0, 0, 0];
-                } else if (chartId === 'materialChart') {
-                    chart.data.labels = [];
-                    chart.data.datasets[0].data = [];
-                }
-                chart.update();
-            }
-        }
-
-        // Export chart as image
-        function exportChart(chartId) {
-            const chart = Chart.getChart(chartId);
-            if (chart) {
-                const url = chart.toBase64Image();
-                const link = document.createElement('a');
-                link.download = chartId + '.png';
-                link.href = url;
-                link.click();
-            }
         }
 
         // Scroll to section
