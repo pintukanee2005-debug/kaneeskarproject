@@ -6,6 +6,7 @@
     <title>h2Oclear-x | Revolutionizing Microplastic Detection</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -171,6 +172,34 @@
             color: #666;
             margin-bottom: 10px;
             text-align: center;
+        }
+        
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-dot.connected {
+            background-color: #4CAF50;
+        }
+        
+        .status-dot.disconnected {
+            background-color: #F44336;
         }
     </style>
 </head>
@@ -533,6 +562,12 @@
         </div>
     </div>
 
+    <!-- API Connection Status Indicator -->
+    <div class="connection-status" id="apiStatus">
+        <div class="status-dot disconnected" id="apiStatusDot"></div>
+        <span id="apiStatusText">Disconnected from API</span>
+    </div>
+
     <script>
         // Bluetooth connection variables
         let bluetoothDevice = null;
@@ -543,6 +578,136 @@
         let availableDevices = [];
         let isScanning = false;
         let scanTimeout = null;
+        
+        // API connection variables
+        let socket = null;
+        let apiConnected = false;
+        const API_URL = 'http://localhost:3000'; // Change this to your API server URL
+
+        // Initialize API connection
+        function initAPIConnection() {
+            console.log('Connecting to API server...');
+            
+            // Connect to the WebSocket server
+            socket = io(API_URL);
+            
+            // Connection event
+            socket.on('connect', () => {
+                console.log('Connected to API server');
+                apiConnected = true;
+                updateAPIStatus(true);
+                
+                // Register this client
+                socket.emit('register', { clientType: 'web', timestamp: new Date() });
+            });
+            
+            // Disconnection event
+            socket.on('disconnect', () => {
+                console.log('Disconnected from API server');
+                apiConnected = false;
+                updateAPIStatus(false);
+            });
+            
+            // Listen for device list updates from the server
+            socket.on('deviceListUpdate', (devices) => {
+                console.log('Received device list update:', devices);
+                
+                // Update our local device list
+                availableDevices = devices;
+                
+                // Update the UI if the device list is visible
+                if (document.getElementById('bluetoothDeviceList').classList.contains('active')) {
+                    updateDeviceList();
+                }
+            });
+            
+            // Listen for commands from the server
+            socket.on('deviceCommand', (command) => {
+                console.log('Received command from server:', command);
+                
+                // Forward the command to the connected Bluetooth device
+                if (isConnected && bluetoothCharacteristic) {
+                    sendCommandToDevice(command);
+                }
+            });
+            
+            // Listen for real-time data from other devices
+            socket.on('deviceData', (data) => {
+                console.log('Received device data from server:', data);
+                
+                // Add to our data stream
+                dataStream.push({
+                    ...data,
+                    timestamp: new Date(),
+                    fromAPI: true
+                });
+                
+                // Keep only last 100 entries
+                if (dataStream.length > 100) {
+                    dataStream.shift();
+                }
+                
+                // Update dashboard if visible
+                if (!document.getElementById('dashboardPage').classList.contains('hidden')) {
+                    updateDashboard();
+                }
+            });
+        }
+
+        // Update API connection status indicator
+        function updateAPIStatus(connected) {
+            const statusDot = document.getElementById('apiStatusDot');
+            const statusText = document.getElementById('apiStatusText');
+            
+            if (connected) {
+                statusDot.classList.remove('disconnected');
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected to API';
+            } else {
+                statusDot.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected from API';
+            }
+        }
+
+        // Send command to Bluetooth device
+        function sendCommandToDevice(command) {
+            if (!bluetoothCharacteristic) {
+                console.error('No Bluetooth characteristic available');
+                return;
+            }
+            
+            try {
+                // Convert command to JSON string and then to ArrayBuffer
+                const commandString = JSON.stringify(command);
+                const encoder = new TextEncoder();
+                const commandBuffer = encoder.encode(commandString);
+                
+                // Send the command to the device
+                bluetoothCharacteristic.writeValue(commandBuffer);
+                console.log('Command sent to device:', command);
+            } catch (error) {
+                console.error('Error sending command to device:', error);
+            }
+        }
+
+        // Send device data to API
+        function sendDeviceDataToAPI(data) {
+            if (!apiConnected || !socket) {
+                console.log('Not connected to API, skipping data send');
+                return;
+            }
+            
+            // Send the data to the server
+            socket.emit('deviceData', {
+                deviceId: bluetoothDevice.id,
+                deviceName: bluetoothDevice.name,
+                data: data,
+                timestamp: new Date()
+            });
+            
+            console.log('Device data sent to API');
+        }
 
         // Function to show Bluetooth device list
         function showBluetoothDeviceList() {
@@ -558,6 +723,11 @@
             // Show overlay and device list
             document.getElementById('bluetoothOverlay').classList.add('active');
             document.getElementById('bluetoothDeviceList').classList.add('active');
+            
+            // If connected to API, request device list from server
+            if (apiConnected && socket) {
+                socket.emit('requestDeviceList');
+            }
         }
 
         // Function to hide Bluetooth device list
@@ -591,6 +761,11 @@
             
             // Set scanning flag
             isScanning = true;
+            
+            // Notify API that we're scanning
+            if (apiConnected && socket) {
+                socket.emit('startScanning', { timestamp: new Date() });
+            }
             
             // Try to get previously paired devices first
             if (navigator.bluetooth.getDevices) {
@@ -637,6 +812,16 @@
                 // Add the device to our list if not already there
                 if (!availableDevices.find(d => d.id === device.id)) {
                     availableDevices.push(device);
+                    
+                    // Notify API about the new device
+                    if (apiConnected && socket) {
+                        socket.emit('deviceDiscovered', {
+                            deviceId: device.id,
+                            deviceName: device.name,
+                            timestamp: new Date()
+                        });
+                    }
+                    
                     updateDeviceList();
                 }
                 
@@ -681,6 +866,11 @@
             
             // Set scanning flag
             isScanning = false;
+            
+            // Notify API that we stopped scanning
+            if (apiConnected && socket) {
+                socket.emit('stopScanning', { timestamp: new Date() });
+            }
             
             // Update the UI
             updateDeviceList();
@@ -771,6 +961,15 @@
                 document.getElementById('connectBtn').textContent = 'Disconnect';
                 document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
 
+                // Notify API about the connection
+                if (apiConnected && socket) {
+                    socket.emit('deviceConnected', {
+                        deviceId: device.id,
+                        deviceName: device.name,
+                        timestamp: new Date()
+                    });
+                }
+
                 // Show connection animation
                 document.getElementById('connectionLine').classList.add('active');
                 document.querySelectorAll('.wave').forEach(wave => {
@@ -804,15 +1003,23 @@
             
             try {
                 const data = JSON.parse(jsonData);
-                dataStream.push({
+                
+                // Add timestamp
+                const dataWithTimestamp = {
                     ...data,
                     timestamp: new Date()
-                });
+                };
+                
+                // Add to our data stream
+                dataStream.push(dataWithTimestamp);
                 
                 // Keep only last 100 entries
                 if (dataStream.length > 100) {
                     dataStream.shift();
                 }
+                
+                // Send data to API
+                sendDeviceDataToAPI(dataWithTimestamp);
                 
                 // Update dashboard if visible
                 if (!document.getElementById('dashboardPage').classList.contains('hidden')) {
@@ -833,6 +1040,14 @@
             updateBluetoothStatus(false);
             document.getElementById('connectBtn').textContent = 'Connect Device';
             document.getElementById('connectBtn').onclick = showBluetoothDeviceList;
+            
+            // Notify API about the disconnection
+            if (apiConnected && socket && bluetoothDevice) {
+                socket.emit('deviceDisconnected', {
+                    deviceId: bluetoothDevice.id,
+                    timestamp: new Date()
+                });
+            }
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
@@ -1025,6 +1240,9 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize API connection
+            initAPIConnection();
+            
             // Set up navigation toggle
             const navToggle = document.getElementById('navToggle');
             const navMenu = document.getElementById('navMenu');
