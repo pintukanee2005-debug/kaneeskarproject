@@ -9,6 +9,135 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Additional styles for Bluetooth device list */
+        .bluetooth-device-list {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 500px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .bluetooth-device-list.active {
+            display: flex;
+        }
+        
+        .device-list-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .device-list-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .close-list-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .device-list-content {
+            padding: 10px;
+        }
+        
+        .device-item {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .device-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .device-item-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        
+        .device-item-info {
+            flex: 1;
+        }
+        
+        .device-item-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .device-item-id {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .device-item-signal {
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .no-devices-message {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .refresh-btn {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #3a7bc8;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -146,7 +275,7 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn--secondary" id="connectBtn" onclick="requestBluetoothDevice()">
+                    <button class="btn btn--secondary" id="connectBtn" onclick="showBluetoothDeviceList()">
                         Connect Device
                     </button>
                 </div>
@@ -354,6 +483,21 @@
         </div>
     </div>
 
+    <!-- Bluetooth Device Selection Modal -->
+    <div class="overlay" id="bluetoothOverlay" onclick="hideBluetoothDeviceList()"></div>
+    <div class="bluetooth-device-list" id="bluetoothDeviceList">
+        <div class="device-list-header">
+            <h3 class="device-list-title">Select a Bluetooth Device</h3>
+            <button class="close-list-btn" onclick="hideBluetoothDeviceList()">×</button>
+        </div>
+        <div class="device-list-content" id="deviceListContent">
+            <div class="no-devices-message">
+                <p>Scanning for devices...</p>
+                <button class="refresh-btn" onclick="scanForDevices()">Refresh</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Bluetooth connection variables
         let bluetoothDevice = null;
@@ -361,10 +505,11 @@
         let isConnected = false;
         let dataStream = [];
         let chartsInitialized = false;
+        let availableDevices = [];
 
-        // Function to request Bluetooth device - this will show the device selection dialog
-        async function requestBluetoothDevice() {
-            console.log('Requesting Bluetooth device...');
+        // Function to show Bluetooth device list
+        function showBluetoothDeviceList() {
+            console.log('Showing Bluetooth device list...');
             
             // Check if Web Bluetooth is available
             if (!navigator.bluetooth) {
@@ -373,20 +518,90 @@
                 return;
             }
 
-            try {
-                console.log('Calling navigator.bluetooth.requestDevice...');
-                
-                // Request device with our custom service UUID
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true, // This will show all available devices
-                    optionalServices: ['generic_access', 'device_information', '00001801-0000-1000-8000-00805f9b34fb']
-                });
+            // Show overlay and device list
+            document.getElementById('bluetoothOverlay').classList.add('active');
+            document.getElementById('bluetoothDeviceList').classList.add('active');
+            
+            // Scan for devices
+            scanForDevices();
+        }
 
-                console.log('Device selected:', bluetoothDevice.name);
+        // Function to hide Bluetooth device list
+        function hideBluetoothDeviceList() {
+            document.getElementById('bluetoothOverlay').classList.remove('active');
+            document.getElementById('bluetoothDeviceList').classList.remove('active');
+        }
+
+        // Function to scan for Bluetooth devices
+        async function scanForDevices() {
+            console.log('Scanning for Bluetooth devices...');
+            
+            const deviceListContent = document.getElementById('deviceListContent');
+            deviceListContent.innerHTML = '<div class="no-devices-message"><p>Scanning for devices...</p></div>';
+            
+            try {
+                // Request device with our custom service UUID
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['generic_access', 'device_information', 'battery_service', '00001801-0000-1000-8000-00805f9b34fb']
+                });
                 
+                // Add the selected device to our list
+                availableDevices = [device];
+                displayDeviceList();
+                
+                // Try to connect to the selected device
+                connectToDevice(device);
+                
+            } catch (error) {
+                console.error('Error scanning for devices:', error);
+                
+                if (error.name === 'NotFoundError') {
+                    deviceListContent.innerHTML = '<div class="no-devices-message"><p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                } else {
+                    deviceListContent.innerHTML = '<div class="no-devices-message"><p>Error scanning for devices: ' + error.message + '</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                }
+            }
+        }
+
+        // Function to display the list of available devices
+        function displayDeviceList() {
+            const deviceListContent = document.getElementById('deviceListContent');
+            
+            if (availableDevices.length === 0) {
+                deviceListContent.innerHTML = '<div class="no-devices-message"><p>No Bluetooth devices found. Please make sure your device is powered on and in range.</p><button class="refresh-btn" onclick="scanForDevices()">Refresh</button></div>';
+                return;
+            }
+            
+            let devicesHTML = '';
+            
+            availableDevices.forEach((device, index) => {
+                const deviceName = device.name || 'Unknown Device';
+                const deviceId = device.id || 'Unknown ID';
+                
+                devicesHTML += `
+                    <div class="device-item" onclick="connectToDevice(availableDevices[${index}])">
+                        <div class="device-item-icon">📱</div>
+                        <div class="device-item-info">
+                            <div class="device-item-name">${deviceName}</div>
+                            <div class="device-item-id">${deviceId}</div>
+                        </div>
+                        <div class="device-item-signal">📶</div>
+                    </div>
+                `;
+            });
+            
+            deviceListContent.innerHTML = devicesHTML;
+        }
+
+        // Function to connect to a specific Bluetooth device
+        async function connectToDevice(device) {
+            console.log('Connecting to device:', device.name);
+            
+            try {
                 // Connect to device
                 console.log('Connecting to GATT server...');
-                const server = await bluetoothDevice.gatt.connect();
+                const server = await device.gatt.connect();
                 console.log('Connected to GATT server');
 
                 // Get service and characteristic
@@ -415,13 +630,17 @@
                 document.querySelectorAll('.wave').forEach(wave => {
                     wave.classList.add('active');
                 });
+                
+                // Hide device list
+                hideBluetoothDeviceList();
+                
+                // Show success message
+                alert('Successfully connected to ' + (device.name || 'Unknown Device'));
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
                 
-                if (error.name === 'NotFoundError') {
-                    alert('No Bluetooth devices found. Please make sure your device is powered on and in range.');
-                } else if (error.name === 'NetworkError') {
+                if (error.name === 'NetworkError') {
                     alert('Bluetooth connection failed. Please try again.');
                 } else if (error.name === 'SecurityError') {
                     alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
@@ -467,7 +686,7 @@
             isConnected = false;
             updateBluetoothStatus(false);
             document.getElementById('connectBtn').textContent = 'Connect Device';
-            document.getElementById('connectBtn').onclick = requestBluetoothDevice;
+            document.getElementById('connectBtn').onclick = showBluetoothDeviceList;
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
