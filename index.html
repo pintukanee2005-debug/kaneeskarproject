@@ -67,7 +67,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #555;
+            color: #000000; /* Set input label color to black */
         }
         
         .form-control {
@@ -289,6 +289,7 @@
             display: none;
             flex-direction: column;
             padding: 20px;
+            color: #000000; /* Set default text color to black */
         }
         
         .wifi-connection.active {
@@ -307,6 +308,7 @@
             font-size: 18px;
             font-weight: 600;
             margin: 0;
+            color: #000000; /* Set title color to black */
         }
         
         .close-connection-btn {
@@ -314,7 +316,7 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: #000000; /* Set close button color to black */
         }
         
         .connection-content {
@@ -333,6 +335,7 @@
             background-color: #f0f7ff;
             border-radius: 4px;
             font-size: 14px;
+            color: #000000; /* Set info text color to black */
         }
         
         .overlay {
@@ -776,14 +779,13 @@
     <div class="overlay" id="overlay" onclick="hideWifiConnection()"></div>
     <div class="wifi-connection" id="wifiConnection">
         <div class="connection-header">
-            <h3 class="connection-title">Connect to H2O CLEAR-X Device</h3>
+            <h3 class="connection-title">Connect to h2Oclear-x Device</h3>
             <button class="close-connection-btn" onclick="hideWifiConnection()">×</button>
         </div>
         <div class="connection-content">
             <div class="connection-info">
                 Enter the IP address of your h2Oclear-x device to establish a connection. 
                 Make sure your device is powered on and connected to the same WiFi network.
-                color: black;
             </div>
             <form class="connection-form" onsubmit="connectToDevice(event)">
                 <div class="form-group">
