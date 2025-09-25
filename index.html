@@ -10,6 +10,202 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Additional styles for Bluetooth device list */
+        .bluetooth-device-list {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 500px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .bluetooth-device-list.active {
+            display: flex;
+        }
+        
+        .device-list-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .device-list-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .close-list-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .device-list-content {
+            padding: 10px;
+        }
+        
+        .device-item {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .device-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .device-item.selected {
+            background-color: #e0f2ff;
+            border: 1px solid #4a90e2;
+        }
+        
+        .device-item-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        
+        .device-item-info {
+            flex: 1;
+        }
+        
+        .device-item-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .device-item-id {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .device-item-signal {
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .no-devices-message {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .refresh-btn, .scan-btn {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .refresh-btn:hover, .scan-btn:hover {
+            background-color: #3a7bc8;
+        }
+        
+        .scan-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .scanning-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #4a90e2;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .device-count {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-dot.connected {
+            background-color: #4CAF50;
+        }
+        
+        .status-dot.disconnected {
+            background-color: #F44336;
+        }
+        
         /* Login and Dashboard Styles */
         .page-content {
             display: none;
@@ -67,7 +263,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #000000; /* Set input label color to black */
+            color: #555;
         }
         
         .form-control {
@@ -162,12 +358,12 @@
             font-weight: 600;
         }
         
-        .wifi-status {
+        .bluetooth-status {
             display: flex;
             align-items: center;
         }
         
-        .wifi-status .status-indicator {
+        .bluetooth-status .status-indicator {
             width: 10px;
             height: 10px;
             border-radius: 50%;
@@ -175,7 +371,7 @@
             background-color: #ddd;
         }
         
-        .wifi-status .status-indicator.active {
+        .bluetooth-status .status-indicator.active {
             background-color: #4CAF50;
         }
         
@@ -273,157 +469,6 @@
         .logo-black {
             color: #000000;
         }
-        
-        /* WiFi Connection Styles */
-        .wifi-connection {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 500px;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            color: #000000; /* Set default text color to black */
-        }
-        
-        .wifi-connection.active {
-            display: flex;
-        }
-        
-        .connection-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .connection-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0;
-            color: #000000; /* Set title color to black */
-        }
-        
-        .close-connection-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #000000; /* Set close button color to black */
-        }
-        
-        .connection-content {
-            padding: 20px;
-        }
-        
-        .connection-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .connection-info {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f0f7ff;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #000000; /* Set info text color to black */
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        .connection-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-dot.connected {
-            background-color: #4CAF50;
-        }
-        
-        .status-dot.disconnected {
-            background-color: #F44336;
-        }
-        
-        /* WiFi Animation */
-        .wifi-icon {
-            display: inline-block;
-            position: relative;
-            width: 40px;
-            height: 30px;
-            margin-right: 10px;
-        }
-        
-        .wifi-icon .wifi-signal {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            background-color: #4a90e2;
-            border-radius: 50%;
-        }
-        
-        .wifi-icon .wifi-signal:nth-child(2) {
-            width: 12px;
-            height: 12px;
-            bottom: 4px;
-            opacity: 0.7;
-        }
-        
-        .wifi-icon .wifi-signal:nth-child(3) {
-            width: 20px;
-            height: 20px;
-            bottom: 8px;
-            opacity: 0.4;
-        }
-        
-        .wifi-icon.active .wifi-signal {
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
     </style>
 </head>
 <body>
@@ -464,12 +509,8 @@
                 <div class="hero-visual">
                     <div class="device-mockup">
                         <div class="device-screen">
-                            <div class="wifi-indicator active" id="wifiStatus">
-                                <div class="wifi-icon active">
-                                    <div class="wifi-signal"></div>
-                                    <div class="wifi-signal"></div>
-                                    <div class="wifi-signal"></div>
-                                </div>
+                            <div class="bluetooth-indicator active" id="bluetoothStatus">
+                                <span class="bluetooth-icon">📶</span>
                                 <span>Connected</span>
                             </div>
                         </div>
@@ -489,7 +530,7 @@
                             <li><strong>Detection Range:</strong> 10-100 μm microplastics</li>
                             <li><strong>Accuracy:</strong> 99.8% precision rate</li>
                             <li><strong>Power:</strong> Battery/Solar powered operation</li>
-                            <li><strong>Connectivity:</strong> WiFi wireless connection</li>
+                            <li><strong>Connectivity:</strong> Bluetooth 5.0 wireless</li>
                             <li><strong>Sample Time:</strong> Real-time analysis (&lt;30 seconds)</li>
                         </ul>
                     </div>
@@ -524,23 +565,23 @@
                         <p>Compact design optimized for field use with battery or solar power operation</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">📡</div>
-                        <h3>WiFi Connectivity</h3>
+                        <div class="feature-icon">📱</div>
+                        <h3>Bluetooth Connectivity</h3>
                         <p>Seamless wireless data transfer to companion software and mobile devices</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- WiFi Connectivity Section -->
-        <section class="wifi-section">
+        <!-- Bluetooth Connectivity Section -->
+        <section class="bluetooth-section">
             <div class="container">
                 <h2 class="section-title">Effortless Wireless Connectivity</h2>
                 <p class="section-subtitle">No cables. No hassle. Just real-time data at your fingertips.</p>
                 
-                <div class="wifi-demo">
+                <div class="bluetooth-demo">
                     <div class="device-connection">
-                        <div class="wifi-device">
+                        <div class="bluetooth-device">
                             <div class="device-status" id="deviceStatus">
                                 <span class="status-indicator"></span>
                                 <span>h2Oclear-x Device</span>
@@ -566,9 +607,12 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn--secondary" id="connectBtn" onclick="showWifiConnection()">
-                        Connect to Device
+                    <!-- UPDATED: Changed button text from "Connect to ESP32 Detector" to "Available Bluetooth Devices" -->
+                    <button class="btn btn--secondary" id="connectBtn" onclick="connectToESP32()">
+                        Available Bluetooth Devices
                     </button>
+                    
+                    <!-- REMOVED: The entire ESP32 info section with device details -->
                 </div>
             </div>
         </section>
@@ -690,8 +734,8 @@
                 <div class="dashboard-nav">
                     <button class="btn btn--outline" onclick="logout()">← Logout</button>
                     <h1>Data Dashboard</h1>
-                    <div class="wifi-status">
-                        <div class="status-indicator active" id="dashboardWifiStatus"></div>
+                    <div class="bluetooth-status">
+                        <div class="status-indicator active" id="dashboardBluetoothStatus"></div>
                         <span>Device Connected</span>
                     </div>
                 </div>
@@ -775,43 +819,19 @@
         </div>
     </div>
 
-    <!-- WiFi Connection Modal -->
-    <div class="overlay" id="overlay" onclick="hideWifiConnection()"></div>
-    <div class="wifi-connection" id="wifiConnection">
-        <div class="connection-header">
-            <h3 class="connection-title">Connect to h2Oclear-x Device</h3>
-            <button class="close-connection-btn" onclick="hideWifiConnection()">×</button>
-        </div>
-        <div class="connection-content">
-            <div class="connection-info">
-                Enter the IP address of your h2Oclear-x device to establish a connection. 
-                Make sure your device is powered on and connected to the same WiFi network.
-            </div>
-            <form class="connection-form" onsubmit="connectToDevice(event)">
-                <div class="form-group">
-                    <label class="form-label">Device IP Address</label>
-                    <input type="text" class="form-control" id="deviceIP" placeholder="e.g., 192.168.1.100" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Port (Optional)</label>
-                    <input type="text" class="form-control" id="devicePort" placeholder="8080">
-                </div>
-                <button type="submit" class="btn btn--primary btn--full-width">Connect</button>
-            </form>
-        </div>
-    </div>
-
     <script>
         // Global variables
-        let websocket = null;
+        let bluetoothDevice = null;
+        let bluetoothCharacteristic = null;
         let isConnected = false;
         let dataStream = [];
         let chartsInitialized = false;
         let isLoggedIn = false;
-        let connectionInterval = null;
         
         // ESP32 device specific information
-        const DEFAULT_PORT = 8080;
+        const ESP32_DEVICE_ID = "F0:24:F9:58:38:FA";
+        const ESP32_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+        const ESP32_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -881,9 +901,9 @@
             localStorage.removeItem('loggedInUser');
             isLoggedIn = false;
             
-            // Disconnect from device if connected
+            // Disconnect from Bluetooth device if connected
             if (isConnected) {
-                disconnectDevice();
+                disconnectBluetoothDevice();
             }
             
             // Navigate to home page
@@ -911,7 +931,7 @@
                 }
                 
                 document.getElementById('dashboardPage').classList.add('active');
-                document.getElementById('mainHeader').style.display = 'block';
+                document.getElementById('mainHeader').styleDisplay = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
                 
                 // Initialize dashboard charts if needed
@@ -929,91 +949,98 @@
             }
         }
 
-        // Show WiFi connection modal
-        function showWifiConnection() {
-            document.getElementById('overlay').classList.add('active');
-            document.getElementById('wifiConnection').classList.add('active');
-        }
-
-        // Hide WiFi connection modal
-        function hideWifiConnection() {
-            document.getElementById('overlay').classList.remove('active');
-            document.getElementById('wifiConnection').classList.remove('active');
-        }
-
-        // Function to connect to ESP32 device via WiFi
-        function connectToDevice(event) {
-            event.preventDefault();
+        // Function to connect to ESP32 device
+        async function connectToESP32() {
+            console.log('Connecting to ESP32 device...');
             
-            const ipAddress = document.getElementById('deviceIP').value;
-            const port = document.getElementById('devicePort').value || DEFAULT_PORT;
+            // Check if Web Bluetooth is available
+            if (!navigator.bluetooth) {
+                console.error('Web Bluetooth is not available in this browser!');
+                alert('Web Bluetooth is not available in this browser. Please use Chrome, Edge, or Opera.');
+                return;
+            }
             
             // Update button text to show we're trying to connect
             document.getElementById('connectBtn').textContent = 'Connecting...';
             document.getElementById('connectBtn').disabled = true;
             
             try {
-                // Create WebSocket connection
-                const wsUrl = `ws://${ipAddress}:${port}`;
-                console.log('Connecting to WebSocket at:', wsUrl);
+                // Request device with the specific service UUID for ESP32
+                console.log('Requesting Bluetooth device with service UUID:', ESP32_SERVICE_UUID);
                 
-                websocket = new WebSocket(wsUrl);
-                
-                // Connection opened
-                websocket.addEventListener('open', (event) => {
-                    console.log('WebSocket connection established');
-                    
-                    // Update UI
-                    isConnected = true;
-                    updateWifiStatus(true);
-                    document.getElementById('connectBtn').textContent = 'Disconnect';
-                    document.getElementById('connectBtn').disabled = false;
-                    document.getElementById('connectBtn').onclick = disconnectDevice;
-                    
-                    // Show connection animation
-                    document.getElementById('connectionLine').classList.add('active');
-                    document.querySelectorAll('.wave').forEach(wave => {
-                        wave.classList.add('active');
-                    });
-                    
-                    // Hide connection modal
-                    hideWifiConnection();
-                    
-                    // Show success message
-                    alert('Successfully connected to h2Oclear-x device!');
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [ESP32_SERVICE_UUID] }]
                 });
                 
-                // Listen for messages
-                websocket.addEventListener('message', (event) => {
-                    handleWifiData(event);
+                // Verify this is our ESP32 device
+                if (device.id !== ESP32_DEVICE_ID) {
+                    throw new Error(`Connected to wrong device. Expected ${ESP32_DEVICE_ID} but got ${device.id}`);
+                }
+                
+                console.log('ESP32 device selected:', device.name);
+                
+                // Connect to device
+                console.log('Connecting to GATT server...');
+                const server = await device.gatt.connect();
+                console.log('Connected to GATT server');
+
+                // Get service and characteristic
+                console.log('Getting primary service...');
+                const service = await server.getPrimaryService(ESP32_SERVICE_UUID);
+                console.log('Service found');
+                
+                console.log('Getting characteristic...');
+                bluetoothCharacteristic = await service.getCharacteristic(ESP32_CHARACTERISTIC_UUID);
+                console.log('Characteristic found');
+
+                // Start notifications
+                console.log('Starting notifications...');
+                await bluetoothCharacteristic.startNotifications();
+                bluetoothCharacteristic.addEventListener('characteristicvaluechanged', handleBluetoothData);
+                console.log('Notifications started');
+
+                // Update UI
+                isConnected = true;
+                bluetoothDevice = device;
+                updateBluetoothStatus(true);
+                document.getElementById('connectBtn').textContent = 'Disconnect';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('connectBtn').onclick = disconnectBluetoothDevice;
+
+                // Show connection animation
+                document.getElementById('connectionLine').classList.add('active');
+                document.querySelectorAll('.wave').forEach(wave => {
+                    wave.classList.add('active');
                 });
                 
-                // Connection closed
-                websocket.addEventListener('close', (event) => {
-                    console.log('WebSocket connection closed');
-                    if (isConnected) {
-                        disconnectDevice();
-                    }
-                });
-                
-                // Connection error
-                websocket.addEventListener('error', (event) => {
-                    console.error('WebSocket error:', event);
-                    alert('Failed to connect to the device. Please check the IP address and port, and ensure the device is powered on.');
-                    disconnectDevice();
-                });
-                
+                // Show success message
+                alert('Successfully connected to ESP32 Microplastic Detector!');
+
             } catch (error) {
-                console.error('Connection error:', error);
-                alert('Failed to connect to the device. Please check the IP address and port.');
-                disconnectDevice();
+                console.error('Bluetooth connection failed:', error);
+                
+                // Reset button
+                document.getElementById('connectBtn').textContent = 'Available Bluetooth Devices';
+                document.getElementById('connectBtn').disabled = false;
+                
+                if (error.name === 'NetworkError') {
+                    alert('Bluetooth connection failed. Please make sure your ESP32 device is powered on and in range.');
+                } else if (error.name === 'SecurityError') {
+                    alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
+                } else {
+                    alert('Failed to connect to ESP32 device: ' + error.message);
+                }
             }
         }
 
-        // Handle data received from WiFi device
-        function handleWifiData(event) {
+        // Handle data received from Bluetooth device
+        function handleBluetoothData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder();
+            const jsonData = decoder.decode(value);
+            
             try {
-                const data = JSON.parse(event.data);
+                const data = JSON.parse(jsonData);
                 
                 // Add timestamp
                 const dataWithTimestamp = {
@@ -1038,18 +1065,17 @@
             }
         }
 
-        // Disconnect device
-        function disconnectDevice() {
-            if (websocket) {
-                websocket.close();
-                websocket = null;
+        // Disconnect Bluetooth device
+        function disconnectBluetoothDevice() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                bluetoothDevice.gatt.disconnect();
             }
             
             isConnected = false;
-            updateWifiStatus(false);
-            document.getElementById('connectBtn').textContent = 'Connect to Device';
+            updateBluetoothStatus(false);
+            document.getElementById('connectBtn').textContent = 'Available Bluetooth Devices';
             document.getElementById('connectBtn').disabled = false;
-            document.getElementById('connectBtn').onclick = showWifiConnection;
+            document.getElementById('connectBtn').onclick = connectToESP32;
             
             // Hide connection animation
             document.getElementById('connectionLine').classList.remove('active');
@@ -1058,12 +1084,12 @@
             });
         }
 
-        // Update WiFi status indicators
-        function updateWifiStatus(connected) {
+        // Update Bluetooth status indicators
+        function updateBluetoothStatus(connected) {
             const statusElements = [
-                document.getElementById('wifiStatus'),
+                document.getElementById('bluetoothStatus'),
                 document.getElementById('deviceStatus'),
-                document.getElementById('dashboardWifiStatus')
+                document.getElementById('dashboardBluetoothStatus')
             ];
             
             statusElements.forEach(el => {
