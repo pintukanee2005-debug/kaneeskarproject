@@ -98,7 +98,7 @@
         
         .btn--primary {
             background-color: #4a90e2;
-            color: black;
+            color: white;
         }
         
         .btn--primary:hover {
@@ -121,7 +121,7 @@
         
         .btn--secondary {
             background-color: #50c878;
-            color: black;
+            color: white;
         }
         
         .btn--secondary:hover {
@@ -776,13 +776,14 @@
     <div class="overlay" id="overlay" onclick="hideWifiConnection()"></div>
     <div class="wifi-connection" id="wifiConnection">
         <div class="connection-header">
-            <h3 class="connection-title">Connect to h2Oclear-x Device</h3>
+            <h3 class="connection-title">Connect to H2O CLEAR-X Device</h3>
             <button class="close-connection-btn" onclick="hideWifiConnection()">×</button>
         </div>
         <div class="connection-content">
             <div class="connection-info">
                 Enter the IP address of your h2Oclear-x device to establish a connection. 
                 Make sure your device is powered on and connected to the same WiFi network.
+                color: black;
             </div>
             <form class="connection-form" onsubmit="connectToDevice(event)">
                 <div class="form-group">
