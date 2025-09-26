@@ -10,7 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Additional styles for Bluetooth device list */
+        /* Previous styles remain unchanged */
+        /* ... (all your existing styles) ... */
+        
+        /* Bluetooth Device List Styles */
         .bluetooth-device-list {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
@@ -240,7 +243,6 @@
             margin-bottom: 30px;
         }
         
-        /* NEW: Add proper styling for login title */
         .login-title {
             font-size: 32px;
             font-weight: 700;
@@ -273,7 +275,7 @@
             border-radius: 4px;
             font-size: 16px;
             transition: border-color 0.3s;
-            color: #000000; /* Set input text color to black */
+            color: #000000;
         }
         
         .form-control:focus {
@@ -607,12 +609,9 @@
                             </div>
                         </div>
                     </div>
-                    <!-- UPDATED: Changed button text from "Connect to ESP32 Detector" to "Available Bluetooth Devices" -->
                     <button class="btn btn--secondary" id="connectBtn" onclick="connectToESP32()">
                         Available Bluetooth Devices
                     </button>
-                    
-                    <!-- REMOVED: The entire ESP32 info section with device details -->
                 </div>
             </div>
         </section>
@@ -703,7 +702,6 @@
     <div id="loginPage" class="page-content">
         <div class="login-container">
             <div class="login-form">
-                <!-- FIXED: Changed logo span to h1 with proper class and capitalization -->
                 <div class="login-header">
                     <h1 class="login-title">H<span class="logo-accent">2O</span> <span class="logo-black">CLEAR-X</span></h1>
                     <h2>Sign In to Dashboard</h2>
@@ -819,6 +817,25 @@
         </div>
     </div>
 
+    <!-- Bluetooth Device List Modal -->
+    <div class="overlay" id="bluetoothOverlay" onclick="closeBluetoothList()"></div>
+    <div class="bluetooth-device-list" id="bluetoothDeviceList">
+        <div class="device-list-header">
+            <h3 class="device-list-title">Select a Bluetooth Device</h3>
+            <button class="close-list-btn" onclick="closeBluetoothList()">&times;</button>
+        </div>
+        <div class="device-list-content">
+            <div class="device-count" id="deviceCount">0 devices found</div>
+            <div id="deviceListContainer">
+                <div class="scanning-indicator">
+                    <div class="spinner"></div>
+                    <span>Scanning for devices...</span>
+                </div>
+            </div>
+            <button class="scan-btn" id="scanBtn" onclick="scanForDevices()">Scan for Devices</button>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let bluetoothDevice = null;
@@ -827,6 +844,7 @@
         let dataStream = [];
         let chartsInitialized = false;
         let isLoggedIn = false;
+        let availableDevices = [];
         
         // ESP32 device specific information
         const ESP32_DEVICE_ID = "F0:24:F9:58:38:FA";
@@ -931,7 +949,7 @@
                 }
                 
                 document.getElementById('dashboardPage').classList.add('active');
-                document.getElementById('mainHeader').styleDisplay = 'block';
+                document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
                 
                 // Initialize dashboard charts if needed
@@ -949,10 +967,8 @@
             }
         }
 
-        // Function to connect to ESP32 device
-        async function connectToESP32() {
-            console.log('Connecting to ESP32 device...');
-            
+        // Function to show Bluetooth device list
+        function connectToESP32() {
             // Check if Web Bluetooth is available
             if (!navigator.bluetooth) {
                 console.error('Web Bluetooth is not available in this browser!');
@@ -960,25 +976,98 @@
                 return;
             }
             
+            // Show the Bluetooth device list modal
+            document.getElementById('bluetoothOverlay').classList.add('active');
+            document.getElementById('bluetoothDeviceList').classList.add('active');
+            
+            // Start scanning for devices
+            scanForDevices();
+        }
+
+        // Function to scan for Bluetooth devices
+        async function scanForDevices() {
+            const deviceListContainer = document.getElementById('deviceListContainer');
+            const deviceCount = document.getElementById('deviceCount');
+            
+            // Show scanning indicator
+            deviceListContainer.innerHTML = `
+                <div class="scanning-indicator">
+                    <div class="spinner"></div>
+                    <span>Scanning for devices...</span>
+                </div>
+            `;
+            
+            try {
+                // Request Bluetooth device
+                console.log('Requesting Bluetooth Device...');
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [ESP32_SERVICE_UUID]
+                });
+                
+                // Add device to list
+                availableDevices = [device];
+                displayDeviceList();
+                
+            } catch (error) {
+                console.error('Bluetooth scanning failed:', error);
+                
+                // Show error message
+                deviceListContainer.innerHTML = `
+                    <div class="no-devices-message">
+                        No devices found. Please make sure your device is turned on and in range.
+                    </div>
+                `;
+                
+                deviceCount.textContent = '0 devices found';
+            }
+        }
+
+        // Function to display the list of available devices
+        function displayDeviceList() {
+            const deviceListContainer = document.getElementById('deviceListContainer');
+            const deviceCount = document.getElementById('deviceCount');
+            
+            deviceCount.textContent = `${availableDevices.length} device(s) found`;
+            
+            if (availableDevices.length === 0) {
+                deviceListContainer.innerHTML = `
+                    <div class="no-devices-message">
+                        No devices found. Please make sure your device is turned on and in range.
+                    </div>
+                `;
+                return;
+            }
+            
+            let deviceHTML = '';
+            availableDevices.forEach((device, index) => {
+                deviceHTML += `
+                    <div class="device-item" onclick="selectDevice(${index})">
+                        <div class="device-item-icon">📡</div>
+                        <div class="device-item-info">
+                            <div class="device-item-name">${device.name || 'Unknown Device'}</div>
+                            <div class="device-item-id">${device.id}</div>
+                        </div>
+                        <div class="device-item-signal">📶</div>
+                    </div>
+                `;
+            });
+            
+            deviceListContainer.innerHTML = deviceHTML;
+        }
+
+        // Function to select a device and connect to it
+        async function selectDevice(index) {
+            const device = availableDevices[index];
+            
+            // Close the device list
+            closeBluetoothList();
+            
             // Update button text to show we're trying to connect
             document.getElementById('connectBtn').textContent = 'Connecting...';
             document.getElementById('connectBtn').disabled = true;
             
             try {
-                // Request device with the specific service UUID for ESP32
-                console.log('Requesting Bluetooth device with service UUID:', ESP32_SERVICE_UUID);
-                
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [ESP32_SERVICE_UUID] }]
-                });
-                
-                // Verify this is our ESP32 device
-                if (device.id !== ESP32_DEVICE_ID) {
-                    throw new Error(`Connected to wrong device. Expected ${ESP32_DEVICE_ID} but got ${device.id}`);
-                }
-                
-                console.log('ESP32 device selected:', device.name);
-                
                 // Connect to device
                 console.log('Connecting to GATT server...');
                 const server = await device.gatt.connect();
@@ -1014,7 +1103,7 @@
                 });
                 
                 // Show success message
-                alert('Successfully connected to ESP32 Microplastic Detector!');
+                alert('Successfully connected to ' + (device.name || 'Bluetooth device') + '!');
 
             } catch (error) {
                 console.error('Bluetooth connection failed:', error);
@@ -1024,13 +1113,19 @@
                 document.getElementById('connectBtn').disabled = false;
                 
                 if (error.name === 'NetworkError') {
-                    alert('Bluetooth connection failed. Please make sure your ESP32 device is powered on and in range.');
+                    alert('Bluetooth connection failed. Please make sure your device is powered on and in range.');
                 } else if (error.name === 'SecurityError') {
                     alert('Bluetooth access denied. Please allow the browser to access Bluetooth devices.');
                 } else {
-                    alert('Failed to connect to ESP32 device: ' + error.message);
+                    alert('Failed to connect to device: ' + error.message);
                 }
             }
+        }
+
+        // Function to close the Bluetooth device list
+        function closeBluetoothList() {
+            document.getElementById('bluetoothOverlay').classList.remove('active');
+            document.getElementById('bluetoothDeviceList').classList.remove('active');
         }
 
         // Handle data received from Bluetooth device
