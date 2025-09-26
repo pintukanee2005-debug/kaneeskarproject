@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Previous styles remain unchanged */
+        /* All your existing styles remain unchanged */
         /* ... (all your existing styles) ... */
         
         /* Bluetooth Device List Styles */
@@ -847,7 +847,6 @@
         let availableDevices = [];
         
         // ESP32 device specific information
-        const ESP32_DEVICE_ID = "F0:24:F9:58:38:FA";
         const ESP32_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
         const ESP32_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
@@ -874,19 +873,15 @@
 
         // Check login status
         function checkLoginStatus() {
-            // In a real application, you would check for a valid session token
-            // For this demo, we'll just check localStorage
             const loggedInUser = localStorage.getItem('loggedInUser');
             
             if (loggedInUser) {
                 isLoggedIn = true;
-                // If we're not on the dashboard page, redirect to it
                 if (!document.getElementById('dashboardPage').classList.contains('active')) {
                     navigateTo('dashboard');
                 }
             } else {
                 isLoggedIn = false;
-                // If we're not on the home page, redirect to it
                 if (!document.getElementById('mainContent').style.display || document.getElementById('mainContent').style.display === 'none') {
                     navigateTo('home');
                 }
@@ -899,14 +894,9 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            // Simple authentication (replace with real authentication)
             if (username && password) {
-                // In a real application, you would send these credentials to your server
-                // For this demo, we'll just set a localStorage item
                 localStorage.setItem('loggedInUser', username);
                 isLoggedIn = true;
-                
-                // Navigate to dashboard
                 navigateTo('dashboard');
             } else {
                 alert('Please enter valid credentials');
@@ -915,34 +905,28 @@
 
         // Logout function
         function logout() {
-            // Clear the login status
             localStorage.removeItem('loggedInUser');
             isLoggedIn = false;
             
-            // Disconnect from Bluetooth device if connected
             if (isConnected) {
                 disconnectBluetoothDevice();
             }
             
-            // Navigate to home page
             navigateTo('home');
         }
 
         // Navigation function
         function navigateTo(page) {
-            // Hide all pages
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('mainHeader').style.display = 'block';
             document.getElementById('mainFooter').style.display = 'block';
             
-            // Show selected page
             if (page === 'home') {
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
             } else if (page === 'dashboard') {
-                // Check if user is logged in
                 if (!isLoggedIn) {
                     navigateTo('login');
                     return;
@@ -952,13 +936,11 @@
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainFooter').style.display = 'block';
                 
-                // Initialize dashboard charts if needed
                 if (!chartsInitialized) {
                     initDashboardCharts();
                     chartsInitialized = true;
                 }
                 
-                // Update dashboard with latest data
                 updateDashboard();
             } else if (page === 'login') {
                 document.getElementById('loginPage').classList.add('active');
@@ -969,14 +951,12 @@
 
         // Function to show Bluetooth device list
         function connectToESP32() {
-            // Check if Web Bluetooth is available
             if (!navigator.bluetooth) {
                 console.error('Web Bluetooth is not available in this browser!');
                 alert('Web Bluetooth is not available in this browser. Please use Chrome, Edge, or Opera.');
                 return;
             }
             
-            // Show the Bluetooth device list modal
             document.getElementById('bluetoothOverlay').classList.add('active');
             document.getElementById('bluetoothDeviceList').classList.add('active');
             
@@ -998,16 +978,25 @@
             `;
             
             try {
-                // Request Bluetooth device
                 console.log('Requesting Bluetooth Device...');
+                
+                // Request device with filters to find real devices
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
+                    filters: [
+                        { services: [ESP32_SERVICE_UUID] },
+                        { namePrefix: 'ESP32' },
+                        { namePrefix: 'Microplastic' },
+                        { namePrefix: 'Detector' }
+                    ],
                     optionalServices: [ESP32_SERVICE_UUID]
                 });
                 
-                // Add device to list
+                // Add the selected device to our list
                 availableDevices = [device];
                 displayDeviceList();
+                
+                // Automatically connect to the selected device
+                selectDevice(0);
                 
             } catch (error) {
                 console.error('Bluetooth scanning failed:', error);
@@ -1015,7 +1004,7 @@
                 // Show error message
                 deviceListContainer.innerHTML = `
                     <div class="no-devices-message">
-                        No devices found. Please make sure your device is turned on and in range.
+                        No compatible devices found. Please make sure your h2Oclear-x device is turned on and in range.
                     </div>
                 `;
                 
