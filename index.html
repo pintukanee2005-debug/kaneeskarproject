@@ -412,6 +412,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             padding: 20px;
+            position: relative;
         }
         
         .chart-card h3 {
@@ -426,6 +427,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             padding: 20px;
+            position: relative;
         }
         
         .table-section h3 {
@@ -470,6 +472,41 @@
         
         .logo-black {
             color: #000000;
+        }
+        
+        /* Chart legend styling */
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 6px;
+        }
+        
+        /* Demo data indicator */
+        .demo-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff9800;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -774,27 +811,61 @@
                 <!-- Charts Section -->
                 <div class="charts-grid">
                     <div class="chart-card">
+                        <div class="demo-indicator">DEMO DATA</div>
                         <h3>Microplastic Count Over Time</h3>
                         <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="timeSeriesChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
+                        <div class="demo-indicator">DEMO DATA</div>
                         <h3>Size Distribution</h3>
                         <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="sizeChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
+                        <div class="demo-indicator">DEMO DATA</div>
                         <h3>Material Type Breakdown</h3>
                         <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="materialChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Voltage vs Concentration Chart -->
+                    <div class="chart-card">
+                        <div class="demo-indicator">DEMO DATA</div>
+                        <h3>Voltage vs Concentration</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="voltageConcentrationChart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #4CAF50;"></span>
+                                <span>None / Baseline</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #2196F3;"></span>
+                                <span>Low</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #FFC107;"></span>
+                                <span>Medium</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #FF9800;"></span>
+                                <span>High</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #F44336;"></span>
+                                <span>Very High</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Detections Table -->
                 <div class="table-section">
+                    <div class="demo-indicator">DEMO DATA</div>
                     <h3>Recent Detections</h3>
                     <div class="table-container">
                         <table class="data-table">
@@ -1191,21 +1262,45 @@
             });
         }
 
-        // Initialize dashboard charts
+        // Initialize dashboard charts with demo data
         function initDashboardCharts() {
+            // Generate demo data for time series chart
+            const timeLabels = ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+            const timeData = [12, 19, 15, 25, 22, 30, 28, 35, 32, 40];
+            
             // Time series chart
             new Chart(document.getElementById('timeSeriesChart'), {
                 type: 'line',
                 data: {
-                    labels: Array(10).fill(''),
+                    labels: timeLabels,
                     datasets: [{
                         label: 'Microplastic Count',
-                        data: Array(10).fill(0),
+                        data: timeData,
                         borderColor: '#4a90e2',
-                        tension: 0.3
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    }
+                }
             });
             
             // Size distribution chart
@@ -1215,86 +1310,138 @@
                     labels: ['10-25 μm', '25-50 μm', '50-75 μm', '75-100 μm'],
                     datasets: [{
                         label: 'Count',
-                        data: [0, 0, 0, 0],
-                        backgroundColor: '#50c878'
+                        data: [45, 32, 28, 15],
+                        backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF9800']
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Size Range'
+                            }
+                        }
+                    }
+                }
             });
             
             // Material type chart
             new Chart(document.getElementById('materialChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: [],
+                    labels: ['PET', 'PE', 'PP', 'PS'],
                     datasets: [{
-                        data: [],
+                        data: [35, 25, 20, 20],
                         backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        // Update dashboard with real data
-        function updateDashboard() {
-            if (dataStream.length === 0) return;
-            
-            // Update time series chart
-            const timeData = dataStream.slice(-10).map(d => d.count);
-            updateChart('timeSeriesChart', timeData);
-            
-            // Update size distribution
-            const sizeData = categorizeBySize(dataStream);
-            updateChart('sizeChart', sizeData);
-            
-            // Update material type breakdown
-            const materialData = categorizeByMaterial(dataStream);
-            updateChart('materialChart', materialData);
-            
-            // Update recent detections table
-            updateTable(dataStream.slice(-5).reverse());
-        }
-
-        // Helper function to categorize data by size
-        function categorizeBySize(data) {
-            const ranges = {'10-25': 0, '25-50': 0, '50-75': 0, '75-100': 0};
-            data.forEach(d => {
-                if (d.size >= 10 && d.size < 25) ranges['10-25'] += d.count;
-                else if (d.size >= 25 && d.size < 50) ranges['25-50'] += d.count;
-                else if (d.size >= 50 && d.size < 75) ranges['50-75'] += d.count;
-                else if (d.size >= 75 && d.size <= 100) ranges['75-100'] += d.count;
-            });
-            return Object.values(ranges);
-        }
-
-        // Helper function to categorize data by material
-        function categorizeByMaterial(data) {
-            const materials = {};
-            data.forEach(d => {
-                materials[d.type] = (materials[d.type] || 0) + d.count;
-            });
-            return {
-                labels: Object.keys(materials),
-                data: Object.values(materials)
-            };
-        }
-
-        // Update chart with new data
-        function updateChart(chartId, data) {
-            const chart = Chart.getChart(chartId);
-            if (chart) {
-                if (chartId === 'materialChart') {
-                    chart.data.labels = data.labels;
-                    chart.data.datasets[0].data = data.data;
-                } else {
-                    chart.data.datasets[0].data = data;
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
                 }
-                chart.update();
-            }
+            });
+            
+            // Voltage vs Concentration chart
+            const voltageData = [2.45, 2.05, 1.80, 1.65, 1.40, 1.20, 1.05, 0.92, 0.70];
+            const concentrationData = [0, 15, 15, 40, 40, 105, 105, 150, 150];
+            const levelColors = ['#4CAF50', '#2196F3', '#2196F3', '#FFC107', '#FFC107', '#FF9800', '#FF9800', '#F44336', '#F44336'];
+            
+            new Chart(document.getElementById('voltageConcentrationChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Voltage vs Concentration',
+                        data: voltageData.map((voltage, i) => ({
+                            x: voltage,
+                            y: concentrationData[i]
+                        })),
+                        backgroundColor: levelColors,
+                        borderColor: levelColors,
+                        pointRadius: 8,
+                        pointHoverRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Voltage (V)'
+                            },
+                            min: 0.5,
+                            max: 2.5
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Concentration (ppm)'
+                            },
+                            min: 0,
+                            max: 160
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const levels = [
+                                        'None / Baseline',
+                                        'Low',
+                                        'Low',
+                                        'Medium',
+                                        'Medium',
+                                        'High',
+                                        'High',
+                                        'Very High',
+                                        'Very High'
+                                    ];
+                                    return [
+                                        `Voltage: ${voltageData[index]} V`,
+                                        `Concentration: ${concentrationData[index]} ppm`,
+                                        `Level: ${levels[index]}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
-        // Update recent detections table
+        // Update dashboard with demo data
+        function updateDashboard() {
+            // Generate demo data for the table
+            const demoData = [
+                { location: 'Lake Superior', date: new Date(2025, 8, 22), size: 25, type: 'PET', count: 12 },
+                { location: 'Thames River', date: new Date(2025, 8, 21), size: 45, type: 'PE', count: 8 },
+                { location: 'Pacific Ocean', date: new Date(2025, 8, 20), size: 65, type: 'PP', count: 15 },
+                { location: 'Mediterranean', date: new Date(2025, 8, 19), size: 85, type: 'PS', count: 6 },
+                { location: 'Atlantic Ocean', date: new Date(2025, 8, 18), size: 35, type: 'PET', count: 10 }
+            ];
+            
+            // Update the table with demo data
+            updateTable(demoData);
+        }
+
+        // Update recent detections table with demo data
         function updateTable(data) {
             const tbody = document.getElementById('detectionsTable');
             tbody.innerHTML = '';
@@ -1302,7 +1449,7 @@
             data.forEach(d => {
                 const row = tbody.insertRow();
                 row.insertCell(0).textContent = d.location;
-                row.insertCell(1).textContent = d.timestamp.toLocaleDateString();
+                row.insertCell(1).textContent = d.date.toLocaleDateString();
                 row.insertCell(2).textContent = d.size;
                 row.insertCell(3).textContent = d.type;
                 row.insertCell(4).textContent = d.count;
